@@ -21,6 +21,20 @@ const categorySchema = new mongoose.Schema({
     default: true,
     index: true
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: {
+    transform: (doc, ret) => {
+      delete ret.__v;
+      return ret;
+    }
+  },
+  toObject: {
+    transform: (doc, ret) => {
+      delete ret.__v;
+      return ret;
+    }
+  }
+});
 
 module.exports = mongoose.model('Category', categorySchema);

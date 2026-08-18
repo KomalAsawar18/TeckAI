@@ -86,7 +86,21 @@ const productSchema = new mongoose.Schema({
   tags: [{ 
     type: String 
   }]
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: {
+    transform: (doc, ret) => {
+      delete ret.__v;
+      return ret;
+    }
+  },
+  toObject: {
+    transform: (doc, ret) => {
+      delete ret.__v;
+      return ret;
+    }
+  }
+});
 
 // Compound index for price filtering within active products
 productSchema.index({ isActive: 1, price: 1 });
