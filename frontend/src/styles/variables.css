@@ -25,40 +25,6 @@
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-error-soft: #fef2f2;
-}
-
-[data-theme='dark'] {
-  /* Premium Charcoal Dark Mode */
-  --color-bg-base: #0f0f11;
-  --color-bg-surface: #18181b;
-  --color-bg-secondary: #27272a;
-  --color-bg-elevated: #212124;
-  
-  --color-text-primary: #f4f4f5;
-  --color-text-secondary: #a1a1aa;
-  --color-text-muted: #71717a;
-  --color-text-on-accent: #0f0f11;
-
-  --color-primary: #f4f4f5;       /* Charcoal White in dark mode */
-  --color-primary-hover: #e4e4e7;
-  
-  --color-accent: #f4f4f5;
-  --color-accent-highlight: #3b82f6; /* Modern tech blue */
-  --color-accent-soft: rgba(37, 99, 235, 0.1);
-
-  --color-border: #27272a;
-  --color-border-hover: #3f3f46;
-  
-  --color-success: #10b981;
-  --color-success-soft: rgba(16, 185, 129, 0.1);
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-error-soft: rgba(239, 68, 68, 0.1);
-
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-}
 
   /* Typography */
   --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
@@ -101,4 +67,37 @@
   /* Layout Dimensions */
   --max-width-content: 1200px;
   --header-height: 70px;
+}
+
+[data-theme='dark'] {
+  /* Premium Charcoal Dark Mode Overrides */
+  --color-bg-base: #0f0f11;
+  --color-bg-surface: #18181b;
+  --color-bg-secondary: #27272a;
+  --color-bg-elevated: #212124;
+  
+  --color-text-primary: #f4f4f5;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+  --color-text-on-accent: #0f0f11;
+
+  --color-primary: #f4f4f5;       /* Charcoal White in dark mode */
+  --color-primary-hover: #e4e4e7;
+  
+  --color-accent: #f4f4f5;
+  --color-accent-highlight: #3b82f6; /* Modern tech blue */
+  --color-accent-soft: rgba(37, 99, 235, 0.1);
+
+  --color-border: #27272a;
+  --color-border-hover: #3f3f46;
+  
+  --color-success: #10b981;
+  --color-success-soft: rgba(16, 185, 129, 0.1);
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-error-soft: rgba(239, 68, 68, 0.1);
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 }

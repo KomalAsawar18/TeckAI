@@ -8,17 +8,8 @@ const AiAssistant = () => {
   const [messages, setMessages] = useState([
     {
       sender: 'ai',
-      text: "Hello! I am your TeckAI Shopping Assistant. I can help you find hardware in our catalog matching your specific workloads, compare specifications, or answer technical questions.",
-      sections: [
-        {
-          title: "Popular queries to try",
-          items: [
-            "Laptops under 250k for coding & Docker",
-            "Compare Sony WH-1000XM5 vs Bose Ultra",
-            "Silent keyboard for office typing"
-          ]
-        }
-      ],
+      text: "Tell me what you need and I'll help you find the best match from our catalog.",
+      sections: [],
       type: 'general_guidance',
       products: []
     }
@@ -137,10 +128,10 @@ const AiAssistant = () => {
   };
 
   const suggestionChips = [
-    "Laptop under 250k for coding",
+    "Laptop for programming under 200k",
     "Best headphones for office calls",
-    "Compare two laptops under 250k",
-    "Gaming setup under 300k"
+    "Compare two laptops",
+    "DevOps laptop recommendations"
   ];
 
   return (
