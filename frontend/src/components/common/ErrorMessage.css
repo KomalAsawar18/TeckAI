@@ -1,0 +1,32 @@
+.error-container {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background-color: var(--color-error-soft);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-lg);
+  margin: var(--spacing-4) 0;
+  width: 100%;
+}
+
+.error-icon {
+  color: var(--color-error);
+  flex-shrink: 0;
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.error-message {
+  color: var(--color-error);
+}
+
+.btn-retry {
+  align-self: flex-start;
+  padding: var(--spacing-1) var(--spacing-3);
+  margin-top: var(--spacing-1);
+}

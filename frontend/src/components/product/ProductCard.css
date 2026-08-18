@@ -1,0 +1,116 @@
+.product-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.product-card-image-link {
+  display: block;
+  overflow: hidden;
+  background-color: var(--color-bg-secondary);
+}
+
+.product-image-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 66.66%; /* 3:2 Aspect Ratio */
+}
+
+.product-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-normal);
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.03);
+}
+
+.product-card-content {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-4);
+  flex-grow: 1;
+}
+
+.product-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-1);
+}
+
+.product-brand {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.product-rating {
+  gap: 2px;
+  color: var(--color-warning);
+  font-weight: 600;
+}
+
+.star-icon {
+  fill: var(--color-warning);
+}
+
+.product-title {
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.product-title a:hover {
+  color: var(--color-accent-highlight);
+}
+
+.product-card-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--color-bg-secondary);
+}
+
+.product-price-stock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.product-price {
+  color: var(--color-text-primary);
+}
+
+.stock-status {
+  font-weight: 500;
+}
+
+.stock-status.in-stock {
+  color: var(--color-success);
+}
+
+.stock-status.out-of-stock {
+  color: var(--color-error);
+}
+
+.btn-view {
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+.featured-badge {
+  position: absolute;
+  top: var(--spacing-3);
+  left: var(--spacing-3);
+  background-color: var(--color-accent-highlight);
+  color: var(--color-text-on-accent);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  z-index: 10;
+}

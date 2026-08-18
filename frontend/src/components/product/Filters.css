@@ -1,0 +1,83 @@
+.filters-sidebar {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  height: fit-content;
+  position: sticky;
+  top: calc(var(--header-height) + var(--spacing-4));
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-label {
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: var(--font-size-xs);
+}
+
+.search-form {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+.search-input {
+  flex-grow: 1;
+}
+
+.search-btn {
+  padding: 0 var(--spacing-3);
+}
+
+.category-options-list {
+  align-items: flex-start;
+}
+
+.category-option-btn {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  padding: var(--spacing-1) 0;
+  transition: color var(--transition-fast);
+  text-align: left;
+}
+
+.category-option-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.category-option-btn.active {
+  color: var(--color-accent-highlight);
+  font-weight: 600;
+}
+
+.price-range-form {
+  width: 100%;
+}
+
+.price-input {
+  width: 70px;
+  padding: var(--spacing-2);
+  text-align: center;
+}
+
+/* Remove default arrows for numeric inputs in pricing */
+.price-input::-webkit-outer-spin-button,
+.price-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn-price-apply {
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+.btn-clear-filters {
+  width: 100%;
+}
