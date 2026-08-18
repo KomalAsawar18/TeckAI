@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Star, ShoppingCart, Heart, ShieldCheck, Truck, RefreshCw, Minus, Plus } from 'lucide-react';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { formatPrice } from '../utils/format';
 import Loader from '../components/common/Loader';
 import ErrorMessage from '../components/common/ErrorMessage';
@@ -18,6 +19,7 @@ const ProductDetails = () => {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   const handleAddToCart = async () => {
     setAdding(true);
@@ -146,8 +148,13 @@ const ProductDetails = () => {
                 <ShoppingCart size={16} className="icon-spacing" />
                 <span>{adding ? 'Adding...' : added ? 'Added to Cart ✓' : 'Add to Cart'}</span>
               </button>
-              <button className="btn btn-secondary disabled-detail-btn" disabled title="Wishlist is disabled in this phase" type="button">
-                <Heart size={16} />
+              <button 
+                className={`btn btn-secondary ${isInWishlist(product._id) ? 'active' : ''}`} 
+                onClick={() => toggleWishlist(product)}
+                title={isInWishlist(product._id) ? "Remove from Wishlist" : "Add to Wishlist"}
+                type="button"
+              >
+                <Heart size={16} fill={isInWishlist(product._id) ? "var(--color-accent-highlight)" : "none"} color={isInWishlist(product._id) ? "var(--color-accent-highlight)" : "currentColor"} />
               </button>
             </div>
           </div>

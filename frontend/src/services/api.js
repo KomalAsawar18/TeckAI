@@ -150,5 +150,53 @@ export const api = {
       console.error('API Error (getMe):', error.message);
       throw error;
     }
+  },
+
+  /**
+   * Fetch user's wishlist
+   */
+  async getWishlist() {
+    try {
+      const response = await fetch(`${API_BASE}/wishlist`, {
+        headers: getHeaders(null)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (getWishlist):', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Add a product reference to user's wishlist
+   */
+  async addToWishlist(productId) {
+    try {
+      const response = await fetch(`${API_BASE}/wishlist`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ productId })
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`API Error (addToWishlist for ${productId}):`, error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Remove a product reference from user's wishlist
+   */
+  async removeFromWishlist(productId) {
+    try {
+      const response = await fetch(`${API_BASE}/wishlist/${productId}`, {
+        method: 'DELETE',
+        headers: getHeaders(null)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`API Error (removeFromWishlist for ${productId}):`, error.message);
+      throw error;
+    }
   }
 };

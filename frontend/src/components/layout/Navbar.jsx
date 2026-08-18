@@ -3,11 +3,13 @@ import { Link, NavLink } from 'react-router-dom';
 import { Menu, X, Cpu, ShoppingCart, Heart, User, Sparkles, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { cartCount } = useCart();
+  const { wishlistCount } = useWishlist();
   const [isOpen, setIsOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     return document.documentElement.getAttribute('data-theme') || 'light';
@@ -43,10 +45,11 @@ const Navbar = () => {
             AI Assistant
           </NavLink>
           
-          {/* Upcoming / Disabled Links */}
-          <span className="nav-link disabled" title="Wishlist - Coming Soon">
-            <Heart size={14} />
-          </span>
+          {/* Active Navigation Links */}
+          <NavLink to="/wishlist" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} title="Wishlist">
+            <Heart size={14} className="icon-spacing" />
+            {wishlistCount > 0 && <span className="wishlist-badge-count">{wishlistCount}</span>}
+          </NavLink>
           <NavLink to="/cart" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} title="Shopping Cart">
             <ShoppingCart size={14} className="icon-spacing" />
             {cartCount > 0 && <span className="cart-badge-count">{cartCount}</span>}
@@ -97,9 +100,9 @@ const Navbar = () => {
             <Link to="/ai-assistant" onClick={toggleMenu} className="mobile-nav-link">
               AI Assistant
             </Link>
-            <div className="mobile-nav-link disabled">
-              Wishlist (Soon)
-            </div>
+            <Link to="/wishlist" onClick={toggleMenu} className="mobile-nav-link flex align-center gap-2">
+              Wishlist {wishlistCount > 0 && <span className="wishlist-badge-count-mobile">{wishlistCount}</span>}
+            </Link>
             <Link to="/cart" onClick={toggleMenu} className="mobile-nav-link flex align-center gap-2">
               Cart {cartCount > 0 && <span className="cart-badge-count-mobile">{cartCount}</span>}
             </Link>
