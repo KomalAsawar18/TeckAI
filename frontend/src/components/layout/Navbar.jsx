@@ -48,6 +48,9 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <nav className="desktop-nav">
+          <NavLink to="/" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+            Home
+          </NavLink>
           {user ? (
             /* Authenticated Nav Links */
             <>
@@ -97,6 +100,9 @@ const Navbar = () => {
           ) : (
             /* Unauthenticated Nav Links */
             <>
+              <NavLink to="/" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                Home
+              </NavLink>
               <NavLink to="/products" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
                 Products
               </NavLink>
@@ -172,6 +178,9 @@ const Navbar = () => {
             ) : (
               /* Unauthenticated Mobile Links */
               <>
+                <Link to="/" onClick={toggleMenu} className="mobile-nav-link">
+                  Home
+                </Link>
                 <Link to="/products" onClick={toggleMenu} className="mobile-nav-link">
                   Products
                 </Link>
