@@ -5,6 +5,8 @@ const User = require('../src/models/User');
 
 require('dotenv').config();
 
+jest.setTimeout(60000);
+
 beforeAll(async () => {
   process.env.NODE_ENV = 'test';
   

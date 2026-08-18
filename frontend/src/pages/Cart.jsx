@@ -173,13 +173,12 @@ const Cart = () => {
               </span>
             </div>
 
-            <button 
-              className="btn btn-primary w-full py-3"
-              disabled
-              title="Checkout Coming Soon"
+            <Link 
+              to="/checkout"
+              className="btn btn-primary w-full py-3 text-center block"
             >
-              Proceed to Checkout (Soon)
-            </button>
+              Proceed to Checkout
+            </Link>
 
             <div className="flex align-center gap-2 justify-center mt-6 text-xs text-muted">
               <Shield size={14} />

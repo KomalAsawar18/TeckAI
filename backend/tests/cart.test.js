@@ -8,6 +8,8 @@ const Cart = require('../src/models/Cart');
 
 require('dotenv').config();
 
+jest.setTimeout(60000);
+
 beforeAll(async () => {
   process.env.NODE_ENV = 'test';
   

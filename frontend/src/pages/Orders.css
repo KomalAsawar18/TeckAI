@@ -1,0 +1,105 @@
+.orders-loading-container {
+  min-height: 50vh;
+}
+
+.checkout-success-banner {
+  background-color: var(--color-success-soft);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.orders-empty-card {
+  max-width: 460px;
+}
+
+.order-row-card {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.order-row-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.order-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-meta-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  flex-wrap: wrap;
+}
+
+.monospace {
+  font-family: monospace;
+}
+
+/* Status Badge Tag Styles */
+.status-badge {
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-full);
+  letter-spacing: 0.5px;
+}
+
+.status-pending {
+  background-color: var(--color-warning-soft);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-confirmed {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-highlight);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.status-processing {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.status-shipped {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.status-delivered {
+  background-color: var(--color-success-soft);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-cancelled {
+  background-color: var(--color-error-soft);
+  color: var(--color-error);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.preview-items-labels {
+  max-width: 80%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .order-row-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-4);
+  }
+  
+  .order-meta-info {
+    gap: var(--spacing-4);
+  }
+  
+  .order-actions-info {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

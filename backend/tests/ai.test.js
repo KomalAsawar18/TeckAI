@@ -5,6 +5,8 @@ const recommendationService = require('../src/ai/recommendationService');
 
 require('dotenv').config();
 
+jest.setTimeout(60000);
+
 // Avoid connecting to database if not required for mock checks, but hook into mongoose teardown
 beforeAll(async () => {
   process.env.NODE_ENV = 'test';

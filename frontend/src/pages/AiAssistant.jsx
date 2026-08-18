@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { Send, Sparkles, AlertCircle, ShoppingBag, ArrowRight, Table, Info, RefreshCw, MessageSquare, ArrowDownRight } from 'lucide-react';
 import { api } from '../services/api';
 import './AiAssistant.css';
@@ -20,6 +20,16 @@ const AiAssistant = () => {
   
   const containerRef = useRef(null);
   const chatEndRef = useRef(null);
+  const location = useLocation();
+
+  // Handle auto-queries from the homepage
+  useEffect(() => {
+    if (location.state?.initialMessage) {
+      handleSend(location.state.initialMessage);
+      // Clear location state history so refreshes don't re-trigger the query
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Smart scroll: scroll to bottom only if user is already near bottom
   const scrollToBottom = (force = false) => {
@@ -315,7 +325,7 @@ const AiAssistant = () => {
 
         {/* Compact Suggestion Chips */}
         {messages.length === 1 && (
-          <div className="chat-suggestions-panel p-4 flex flex-wrap gap-2 justify-center border-top">
+          <div className="chat-suggestions-panel">
             {suggestionChips.map((chip, cIdx) => (
               <button key={cIdx} className="btn btn-secondary chip-btn text-xs" onClick={() => handleSend(chip)}>
                 <ArrowDownRight size={12} className="text-accent-highlight" />
@@ -326,22 +336,28 @@ const AiAssistant = () => {
         )}
 
         {/* Chat Input Console (Sticky Composer) */}
-        <div className="chat-input-console p-4 border-top flex align-center gap-3">
-          <div className="input-wrapper flex-grow flex flex-col">
+        <div className="chat-input-console">
+          <div className="input-wrapper">
             <textarea
               className="chat-textarea"
-              placeholder="Type your hardware query... (Enter to send, Shift+Enter for new line)"
+              placeholder="Ask about products, compare specs, set a budget..."
               value={inputText}
-              onChange={(e) => setInputText(e.target.value.substring(0, 500))}
+              onChange={(e) => {
+                const val = e.target.value.substring(0, 500);
+                setInputText(val);
+                // Auto-resize
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px';
+              }}
               onKeyDown={onKeyDown}
               rows={1}
             />
-            <span className="text-xxs text-muted align-self-end mt-1">
-              {inputText.length}/500 characters
+            <span className="char-counter">
+              {inputText.length}/500
             </span>
           </div>
           <button className="btn btn-primary send-btn" onClick={() => handleSend()} disabled={!inputText.trim() || loading}>
-            <Send size={15} />
+            <Send size={16} />
           </button>
         </div>
       </div>

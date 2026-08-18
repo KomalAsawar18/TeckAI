@@ -198,5 +198,165 @@ export const api = {
       console.error(`API Error (removeFromWishlist for ${productId}):`, error.message);
       throw error;
     }
+  },
+
+  /**
+   * Place an order (Checkout)
+   */
+  async createOrder(shippingAddress) {
+    try {
+      const response = await fetch(`${API_BASE}/orders`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ shippingAddress })
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (createOrder):', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Retrieve current user's order history
+   */
+  async getUserOrders() {
+    try {
+      const response = await fetch(`${API_BASE}/orders`, {
+        headers: getHeaders(null)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (getUserOrders):', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Retrieve detailed info for a single order
+   */
+  async getOrderById(orderId) {
+    try {
+      const response = await fetch(`${API_BASE}/orders/${orderId}`, {
+        headers: getHeaders(null)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`API Error (getOrderById for ${orderId}):`, error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Retrieve all platform orders
+   */
+  async adminGetOrders() {
+    try {
+      const response = await fetch(`${API_BASE}/orders/admin/all`, {
+        headers: getHeaders(null)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (adminGetOrders):', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Update the status tag of a user's order
+   */
+  async adminUpdateOrderStatus(orderId, status) {
+    try {
+      const response = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ status })
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`API Error (adminUpdateOrderStatus for ${orderId}):`, error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Add a new catalog product
+   */
+  async adminCreateProduct(productData) {
+    try {
+      const response = await fetch(`${API_BASE}/products`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(productData)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (adminCreateProduct):', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Edit details of a catalog product
+   */
+  async adminUpdateProduct(productId, productData) {
+    try {
+      const response = await fetch(`${API_BASE}/products/${productId}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(productData)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`API Error (adminUpdateProduct for ${productId}):`, error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Create a new filter category
+   */
+  async adminCreateCategory(categoryData) {
+    try {
+      const response = await fetch(`${API_BASE}/categories`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(categoryData)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (adminCreateCategory):', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Retrieve all registered platform users
+   */
+  async adminGetUsers() {
+    try {
+      const response = await fetch(`${API_BASE}/users`, {
+        headers: getHeaders(null)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (adminGetUsers):', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Retrieve all products (active and inactive)
+   */
+  async adminGetProducts() {
+    try {
+      const response = await fetch(`${API_BASE}/products/admin/all`, {
+        headers: getHeaders(null)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (adminGetProducts):', error.message);
+      throw error;
+    }
   }
 };

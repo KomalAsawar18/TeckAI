@@ -209,6 +209,11 @@ export const CartProvider = ({ children }) => {
     return await syncCartState([]);
   };
 
+  const clearCartLocally = () => {
+    setCartItems([]);
+    localStorage.removeItem('cart');
+  };
+
   // Get total count of items in the cart
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -224,6 +229,7 @@ export const CartProvider = ({ children }) => {
         updateQuantity,
         removeFromCart,
         clearCart,
+        clearCartLocally,
         cartCount,
         cartSubtotal
       }}

@@ -1,21 +1,35 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { AlertCircle, Lock, Mail, Sparkles, Heart, ShoppingCart } from 'lucide-react';
+import { AlertCircle, Lock, Mail, Sparkles, Heart, ShoppingCart, Eye, EyeOff, Cpu } from 'lucide-react';
 import './auth.css';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
 
   // Smart redirection target post login
   const from = location.state?.from?.pathname || '/';
+
+  // Already authenticated — skip the login form entirely
+  React.useEffect(() => {
+    if (!loading && user) {
+      navigate(from, { replace: true });
+    }
+  }, [user, loading, navigate, from]);
+
+  React.useEffect(() => {
+    if (location.state?.message) {
+      setError(location.state.message);
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,12 +43,12 @@ const Login = () => {
     try {
       const res = await login(email, password);
       if (res.success) {
-        navigate(from, { replace: true });
+        navigate(from, { replace: true, state: { justLoggedIn: true } });
       } else {
-        setError(res.message || 'Login failed. Please verify credentials.');
+        setError(res.message || 'Incorrect email or password.');
       }
     } catch (err) {
-      setError('Connection failed. Please try again.');
+      setError('Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -42,113 +56,75 @@ const Login = () => {
 
   return (
     <div className="auth-page-container fade-in">
-      {/* Left Visual Pane */}
-      <div className="auth-left-pane">
-        <div className="auth-welcome-content">
-          <div className="auth-brand-badge">
-            <Sparkles size={12} style={{ marginRight: '4px' }} />
-            <span>Intelligent Tech Commerce</span>
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-logo">
+            <Cpu className="logo-icon" size={24} />
+            <span>Teck<span style={{ color: 'var(--color-accent-highlight)' }}>AI</span></span>
           </div>
-          <h2 className="auth-welcome-title">
-            Upgrade Your <span>Shopping Experience</span>
-          </h2>
-          <p className="auth-welcome-text">
-            TeckAI combines a developer-grade catalog with natural language intelligence to guide your search for laptops, keyboards, and noise-cancelling headphones.
-          </p>
-
-          <div className="auth-features-list">
-            <div className="auth-feature-item">
-              <div className="auth-feature-icon-box">
-                <Sparkles size={18} />
-              </div>
-              <div className="auth-feature-info">
-                <h4 className="auth-feature-title">AI Shopping Assistant</h4>
-                <p className="auth-feature-desc">Describe your workload and get matched with hardware configurations.</p>
-              </div>
-            </div>
-
-            <div className="auth-feature-item">
-              <div className="auth-feature-icon-box">
-                <Heart size={18} />
-              </div>
-              <div className="auth-feature-info">
-                <h4 className="auth-feature-title">Curated Favorites Wishlist</h4>
-                <p className="auth-feature-desc">Save products to your wishlist and access them across all your devices.</p>
-              </div>
-            </div>
-
-            <div className="auth-feature-item">
-              <div className="auth-feature-icon-box">
-                <ShoppingCart size={18} />
-              </div>
-              <div className="auth-feature-info">
-                <h4 className="auth-feature-title">Persistent Shopping Cart</h4>
-                <p className="auth-feature-desc">Items added to your cart are automatically backed up to MongoDB on login.</p>
-              </div>
-            </div>
-          </div>
+          <h1 className="auth-title">Welcome back</h1>
+          <p className="auth-subtitle">Sign in to continue shopping</p>
         </div>
-      </div>
 
-      {/* Right Form Pane */}
-      <div className="auth-right-pane">
-        <div className="auth-form-container">
-          <div className="auth-header">
-            <h1 className="auth-title">Sign In</h1>
-            <p className="auth-subtitle">Access your TeckAI account</p>
+        {error && (
+          <div className="auth-alert-error">
+            <AlertCircle size={16} className="auth-alert-icon" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-form-group">
+            <label className="auth-label" htmlFor="email">Email</label>
+            <div className="auth-input-wrapper">
+              <Mail size={16} className="auth-input-icon" />
+              <input
+                id="email"
+                type="email"
+                className="auth-input"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
-          {error && (
-            <div className="auth-alert-error">
-              <AlertCircle size={16} className="auth-alert-icon" />
-              <span>{error}</span>
+          <div className="auth-form-group">
+            <label className="auth-label" htmlFor="password">Password</label>
+            <div className="auth-input-wrapper">
+              <Lock size={16} className="auth-input-icon" />
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                className="auth-input"
+                style={{ paddingRight: '2.5rem' }}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="auth-form">
-            <div className="auth-form-group">
-              <label className="auth-label" htmlFor="email">Email Address</label>
-              <div className="auth-input-wrapper">
-                <Mail size={16} className="auth-input-icon" />
-                <input
-                  id="email"
-                  type="email"
-                  className="auth-input"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="auth-form-group">
-              <label className="auth-label" htmlFor="password">Password</label>
-              <div className="auth-input-wrapper">
-                <Lock size={16} className="auth-input-icon" />
-                <input
-                  id="password"
-                  type="password"
-                  className="auth-input"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <button type="submit" className="auth-submit-btn" disabled={submitting}>
-              {submitting ? 'Authenticating...' : 'Sign In'}
-            </button>
-          </form>
-
-          <div className="auth-footer">
-            Don't have an account?{' '}
-            <Link to="/register" className="auth-footer-link">
-              Create one here
-            </Link>
           </div>
+
+          <button type="submit" className="auth-submit-btn" disabled={submitting}>
+            {submitting ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          Don't have an account?{' '}
+          <Link to="/register" className="auth-footer-link">
+            Sign Up
+          </Link>
         </div>
       </div>
     </div>

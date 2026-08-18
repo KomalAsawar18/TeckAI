@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X, Cpu, ShoppingCart, Heart, User, Sparkles, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -11,6 +11,7 @@ const Navbar = () => {
   const { cartCount } = useCart();
   const { wishlistCount } = useWishlist();
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   const [theme, setTheme] = useState(() => {
     return document.documentElement.getAttribute('data-theme') || 'light';
   });
@@ -24,6 +25,19 @@ const Navbar = () => {
     localStorage.setItem('theme', nextTheme);
   };
 
+  const handleAiAssistantClick = (e) => {
+    if (!user) {
+      e.preventDefault();
+      // Redirect to login page with prompt message
+      navigate('/login', {
+        state: {
+          from: { pathname: '/ai-assistant' },
+          message: 'Please sign in to use the AI Shopping Assistant.'
+        }
+      });
+    }
+  };
+
   return (
     <header className="navbar-header">
       <div className="container navbar-container">
@@ -34,44 +48,70 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <nav className="desktop-nav">
-          <NavLink to="/" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-            Home
-          </NavLink>
-          <NavLink to="/products" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-            Products
-          </NavLink>
-          <NavLink to="/ai-assistant" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-            <Sparkles size={14} className="icon-spacing" />
-            AI Assistant
-          </NavLink>
-          
-          {/* Active Navigation Links */}
-          <NavLink to="/wishlist" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} title="Wishlist">
-            <Heart size={14} className="icon-spacing" />
-            {wishlistCount > 0 && <span className="wishlist-badge-count">{wishlistCount}</span>}
-          </NavLink>
-          <NavLink to="/cart" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} title="Shopping Cart">
-            <ShoppingCart size={14} className="icon-spacing" />
-            {cartCount > 0 && <span className="cart-badge-count">{cartCount}</span>}
-          </NavLink>
-
           {user ? (
-            <div className="flex align-center gap-4">
-              <span className="nav-link user-profile-link" title={`Logged in as ${user.name}`} style={{ cursor: 'default' }}>
-                <User size={14} className="icon-spacing" />
-                <span className="user-name-text" style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user.name.split(' ')[0]}
-                </span>
-              </span>
-              <button className="nav-link logout-btn btn-link" onClick={logout} title="Sign Out" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                Logout
-              </button>
-            </div>
+            /* Authenticated Nav Links */
+            <>
+              <NavLink to="/" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                Home
+              </NavLink>
+              <NavLink to="/products" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                Products
+              </NavLink>
+              <NavLink to="/ai-assistant" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                <Sparkles size={14} className="icon-spacing" />
+                AI Assistant
+              </NavLink>
+              
+              <NavLink to="/wishlist" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} title="Wishlist">
+                <Heart size={14} className="icon-spacing" />
+                {wishlistCount > 0 && <span className="wishlist-badge-count">{wishlistCount}</span>}
+              </NavLink>
+              <NavLink to="/cart" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} title="Shopping Cart">
+                <ShoppingCart size={14} className="icon-spacing" />
+                {cartCount > 0 && <span className="cart-badge-count">{cartCount}</span>}
+              </NavLink>
+              <NavLink to="/orders" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                Orders
+              </NavLink>
+              
+              <div className="flex align-center gap-4 ml-4">
+                {user.role === 'admin' && (
+                  <NavLink to="/admin" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} style={{ color: 'var(--color-error)', fontWeight: 'bold' }}>
+                    Admin Area
+                  </NavLink>
+                )}
+                <NavLink to="/profile" className={({ isActive }) => isActive ? "nav-link user-profile-link active" : "nav-link user-profile-link"} title={`Logged in as ${user.name}`}>
+                  <User size={14} className="icon-spacing" />
+                  <span className="user-name-text">Hi, {user.name.split(' ')[0]}</span>
+                </NavLink>
+                <button 
+                  className="nav-link logout-btn btn-link" 
+                  onClick={() => { logout(); navigate('/login'); }} 
+                  title="Sign Out" 
+                  style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  Logout
+                </button>
+              </div>
+            </>
           ) : (
-            <NavLink to="/login" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-              <User size={14} className="icon-spacing" />
-              Login
-            </NavLink>
+            /* Unauthenticated Nav Links */
+            <>
+              <NavLink to="/products" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                Products
+              </NavLink>
+              <NavLink to="/ai-assistant" onClick={handleAiAssistantClick} className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                <Sparkles size={14} className="icon-spacing" />
+                AI Assistant
+              </NavLink>
+              <NavLink to="/login" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                <User size={14} className="icon-spacing" />
+                Login
+              </NavLink>
+              <NavLink to="/register" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                Sign Up
+              </NavLink>
+            </>
           )}
         </nav>
 
@@ -91,38 +131,60 @@ const Navbar = () => {
       {isOpen && (
         <div className="mobile-nav-drawer">
           <nav className="mobile-nav-links container">
-            <Link to="/" onClick={toggleMenu} className="mobile-nav-link">
-              Home
-            </Link>
-            <Link to="/products" onClick={toggleMenu} className="mobile-nav-link">
-              Products
-            </Link>
-            <Link to="/ai-assistant" onClick={toggleMenu} className="mobile-nav-link">
-              AI Assistant
-            </Link>
-            <Link to="/wishlist" onClick={toggleMenu} className="mobile-nav-link flex align-center gap-2">
-              Wishlist {wishlistCount > 0 && <span className="wishlist-badge-count-mobile">{wishlistCount}</span>}
-            </Link>
-            <Link to="/cart" onClick={toggleMenu} className="mobile-nav-link flex align-center gap-2">
-              Cart {cartCount > 0 && <span className="cart-badge-count-mobile">{cartCount}</span>}
-            </Link>
             {user ? (
+              /* Authenticated Mobile Links */
               <>
-                <div className="mobile-nav-link text-primary font-semibold">
-                  Hi, {user.name}
-                </div>
+                <Link to="/" onClick={toggleMenu} className="mobile-nav-link">
+                  Home
+                </Link>
+                <Link to="/products" onClick={toggleMenu} className="mobile-nav-link">
+                  Products
+                </Link>
+                <Link to="/ai-assistant" onClick={toggleMenu} className="mobile-nav-link">
+                  AI Assistant
+                </Link>
+                <Link to="/wishlist" onClick={toggleMenu} className="mobile-nav-link flex align-center gap-2">
+                  Wishlist {wishlistCount > 0 && <span className="wishlist-badge-count-mobile">{wishlistCount}</span>}
+                </Link>
+                <Link to="/cart" onClick={toggleMenu} className="mobile-nav-link flex align-center gap-2">
+                  Cart {cartCount > 0 && <span className="cart-badge-count-mobile">{cartCount}</span>}
+                </Link>
+                <Link to="/orders" onClick={toggleMenu} className="mobile-nav-link">
+                  Orders
+                </Link>
+                <Link to="/profile" onClick={toggleMenu} className="mobile-nav-link flex align-center gap-2">
+                  <User size={14} />
+                  <span>Profile (Hi, {user.name.split(' ')[0]})</span>
+                </Link>
+                {user.role === 'admin' && (
+                  <Link to="/admin" onClick={toggleMenu} className="mobile-nav-link" style={{ color: 'var(--color-error)', fontWeight: 'bold' }}>
+                    Admin Area
+                  </Link>
+                )}
                 <button 
                   className="mobile-nav-link btn-link text-left" 
-                  onClick={() => { logout(); toggleMenu(); }} 
+                  onClick={() => { logout(); toggleMenu(); navigate('/login'); }} 
                   style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer' }}
                 >
                   Logout
                 </button>
               </>
             ) : (
-              <Link to="/login" onClick={toggleMenu} className="mobile-nav-link">
-                Login
-              </Link>
+              /* Unauthenticated Mobile Links */
+              <>
+                <Link to="/products" onClick={toggleMenu} className="mobile-nav-link">
+                  Products
+                </Link>
+                <Link to="/ai-assistant" onClick={(e) => { handleAiAssistantClick(e); toggleMenu(); }} className="mobile-nav-link">
+                  AI Assistant
+                </Link>
+                <Link to="/login" onClick={toggleMenu} className="mobile-nav-link">
+                  Login
+                </Link>
+                <Link to="/register" onClick={toggleMenu} className="mobile-nav-link">
+                  Sign Up
+                </Link>
+              </>
             )}
           </nav>
         </div>
