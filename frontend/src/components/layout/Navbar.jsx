@@ -48,9 +48,6 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <nav className="desktop-nav">
-          <NavLink to="/" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-            Home
-          </NavLink>
           {user ? (
             /* Authenticated Nav Links */
             <>

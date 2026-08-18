@@ -36,11 +36,7 @@ function App() {
                 <Routes>
                   <Route 
                     path="/" 
-                    element={
-                      <ProtectedRoute>
-                        <Home />
-                      </ProtectedRoute>
-                    } 
+                    element={<Home />} 
                   />
                   <Route path="/products" element={<ProductCatalog />} />
                   <Route path="/products/:slug" element={<ProductDetails />} />
