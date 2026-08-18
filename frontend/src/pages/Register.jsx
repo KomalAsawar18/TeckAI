@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { AlertCircle, User, Lock, Mail } from 'lucide-react';
+import './auth.css';
 
 const Register = () => {
   const { register } = useAuth();
@@ -46,29 +47,29 @@ const Register = () => {
   };
 
   return (
-    <div className="container py-16 flex justify-center fade-in">
-      <div className="card p-8 w-full max-w-md shadow-lg border">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-primary">Create Account</h1>
-          <p className="text-secondary text-sm mt-1">Register for e-commerce catalog updates</p>
+    <div className="auth-page-container fade-in">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h1 className="auth-title">Create Account</h1>
+          <p className="auth-subtitle">Register for e-commerce catalog updates</p>
         </div>
 
         {error && (
-          <div className="alert alert-danger flex align-center gap-2 p-3 mb-4 rounded text-sm text-danger bg-error-soft border-error">
-            <AlertCircle size={16} />
+          <div className="auth-alert-error">
+            <AlertCircle size={16} className="auth-alert-icon" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="form-group flex flex-col gap-1">
-            <label className="text-xs font-semibold text-secondary" htmlFor="name">Full Name</label>
-            <div className="input-with-icon relative">
-              <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-form-group">
+            <label className="auth-label" htmlFor="name">Full Name</label>
+            <div className="auth-input-wrapper">
+              <User size={16} className="auth-input-icon" />
               <input
                 id="name"
                 type="text"
-                className="input-control w-full pl-10"
+                className="auth-input"
                 placeholder="John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -77,14 +78,14 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="form-group flex flex-col gap-1">
-            <label className="text-xs font-semibold text-secondary" htmlFor="email">Email Address</label>
-            <div className="input-with-icon relative">
-              <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <div className="auth-form-group">
+            <label className="auth-label" htmlFor="email">Email Address</label>
+            <div className="auth-input-wrapper">
+              <Mail size={16} className="auth-input-icon" />
               <input
                 id="email"
                 type="email"
-                className="input-control w-full pl-10"
+                className="auth-input"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -93,14 +94,14 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="form-group flex flex-col gap-1">
-            <label className="text-xs font-semibold text-secondary" htmlFor="password">Password</label>
-            <div className="input-with-icon relative">
-              <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <div className="auth-form-group">
+            <label className="auth-label" htmlFor="password">Password</label>
+            <div className="auth-input-wrapper">
+              <Lock size={16} className="auth-input-icon" />
               <input
                 id="password"
                 type="password"
-                className="input-control w-full pl-10"
+                className="auth-input"
                 placeholder="Minimum 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -109,14 +110,14 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="form-group flex flex-col gap-1">
-            <label className="text-xs font-semibold text-secondary" htmlFor="confirmPassword">Confirm Password</label>
-            <div className="input-with-icon relative">
-              <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <div className="auth-form-group">
+            <label className="auth-label" htmlFor="confirmPassword">Confirm Password</label>
+            <div className="auth-input-wrapper">
+              <Lock size={16} className="auth-input-icon" />
               <input
                 id="confirmPassword"
                 type="password"
-                className="input-control w-full pl-10"
+                className="auth-input"
                 placeholder="Re-enter password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -125,14 +126,14 @@ const Register = () => {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary w-full mt-2" disabled={submitting}>
+          <button type="submit" className="auth-submit-btn" disabled={submitting}>
             {submitting ? 'Registering...' : 'Register'}
           </button>
         </form>
 
-        <div className="text-center mt-6 pt-4 border-top text-xs text-secondary">
+        <div className="auth-footer">
           Already have an account?{' '}
-          <Link to="/login" className="text-accent-highlight font-semibold">
+          <Link to="/login" className="auth-footer-link">
             Sign In here
           </Link>
         </div>
