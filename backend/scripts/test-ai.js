@@ -21,7 +21,10 @@ const runTest = async () => {
 
     console.log('\n=============================================');
     console.log('3. GEMINI GROUNDED RECOMMENDATION:');
-    console.log(result.response);
+    console.log('Message:', result.response);
+    console.log('Type:', result.type);
+    console.log('Sections:', JSON.stringify(result.sections, null, 2));
+    console.log('Comparison Table:', JSON.stringify(result.comparisonTable, null, 2));
     console.log('=============================================\n');
 
   } catch (error) {

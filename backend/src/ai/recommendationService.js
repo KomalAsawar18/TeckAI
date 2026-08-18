@@ -108,8 +108,34 @@ class RecommendationService {
         history,
       });
 
+      // Parse the structured JSON response from Gemini
+      let parsedResponse = {
+        message: finalResponse,
+        type: matchedProducts.length > 0 ? "catalog_grounded" : "general_guidance",
+        sections: [],
+        comparisonTable: null
+      };
+
+      try {
+        const cleanResponse = finalResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const jsonResponse = JSON.parse(cleanResponse);
+
+        if (jsonResponse.message) parsedResponse.message = jsonResponse.message;
+        if (jsonResponse.type) parsedResponse.type = jsonResponse.type;
+        if (jsonResponse.sections) parsedResponse.sections = jsonResponse.sections;
+        if (jsonResponse.comparisonTable) parsedResponse.comparisonTable = jsonResponse.comparisonTable;
+      } catch (err) {
+        logger.error(`Failed to parse structured response from Gemini: ${err.message}. Falling back to raw response formatting.`);
+        
+        // If Gemini returned a raw text response, clean any raw code blocks if present
+        parsedResponse.message = finalResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
+      }
+
       return {
-        response: finalResponse,
+        response: parsedResponse.message,
+        sections: parsedResponse.sections,
+        comparisonTable: parsedResponse.comparisonTable,
+        type: parsedResponse.type,
         criteria,
         products: matchedProducts.map(p => ({
           name: p.name,
@@ -117,8 +143,9 @@ class RecommendationService {
           brand: p.brand,
           price: p.price,
           images: p.images,
-          slug: p.slug,
-          category: p.category?.name
+          category: p.category?.name,
+          specifications: p.specifications,
+          stock: p.stock
         }))
       };
 

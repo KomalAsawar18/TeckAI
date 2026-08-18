@@ -85,6 +85,20 @@
   color: var(--color-text-primary);
 }
 
+.theme-toggle-btn {
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2);
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--color-bg-secondary);
+}
+
 .mobile-nav-drawer {
   position: absolute;
   top: var(--header-height);

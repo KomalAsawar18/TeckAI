@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Menu, X, Cpu, ShoppingCart, Heart, User, Sparkles } from 'lucide-react';
+import { Menu, X, Cpu, ShoppingCart, Heart, User, Sparkles, Sun, Moon } from 'lucide-react';
 import './Navbar.css';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    return document.documentElement.getAttribute('data-theme') || 'light';
+  });
 
   const toggleMenu = () => setIsOpen(!isOpen);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    localStorage.setItem('theme', nextTheme);
+  };
 
   return (
     <header className="navbar-header">
@@ -41,10 +51,16 @@ const Navbar = () => {
           </span>
         </nav>
 
-        {/* Mobile Hamburger Button */}
-        <button className="mobile-menu-btn" onClick={toggleMenu} aria-label="Toggle navigation menu">
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Navbar Actions Wrapper (Theme Toggle & Mobile Menu) */}
+        <div className="navbar-actions flex align-center gap-4">
+          <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle light and dark theme">
+            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
+          
+          <button className="mobile-menu-btn" onClick={toggleMenu} aria-label="Toggle navigation menu">
+            {isOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Navigation Drawer */}
