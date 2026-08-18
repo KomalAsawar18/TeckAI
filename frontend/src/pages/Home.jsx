@@ -55,10 +55,10 @@ const Home = () => {
             <span>Browse Catalog</span>
             <ArrowRight size={16} />
           </Link>
-          <span className="btn btn-secondary btn-lg disabled-cta" title="AI Search Coming in Phase 5">
+          <Link to="/ai-assistant" className="btn btn-secondary btn-lg">
             <Sparkles size={16} />
-            <span>AI Search (Soon)</span>
-          </span>
+            <span>AI Shopping Assistant</span>
+          </Link>
         </div>
       </section>
 

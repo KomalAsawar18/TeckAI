@@ -61,5 +61,24 @@ export const api = {
       console.error(`API Error (getProductBySlug: ${slug}):`, error.message);
       throw error;
     }
+  },
+
+  /**
+   * Send chat message to AI assistant
+   */
+  async sendAiChat(message, history = []) {
+    try {
+      const response = await fetch(`${API_BASE}/ai/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message, history })
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (sendAiChat):', error.message);
+      throw error;
+    }
   }
 };

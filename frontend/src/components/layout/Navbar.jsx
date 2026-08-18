@@ -24,12 +24,12 @@ const Navbar = () => {
           <NavLink to="/products" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
             Products
           </NavLink>
+          <NavLink to="/ai-assistant" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+            <Sparkles size={14} className="icon-spacing" />
+            AI Assistant
+          </NavLink>
           
           {/* Upcoming / Disabled Links */}
-          <span className="nav-link disabled" title="AI Assistant - Coming Soon">
-            <Sparkles size={14} className="icon-spacing" />
-            AI Assistant <span className="coming-soon-badge">Soon</span>
-          </span>
           <span className="nav-link disabled" title="Wishlist - Coming Soon">
             <Heart size={14} />
           </span>
@@ -57,9 +57,9 @@ const Navbar = () => {
             <Link to="/products" onClick={toggleMenu} className="mobile-nav-link">
               Products
             </Link>
-            <div className="mobile-nav-link disabled">
-              AI Assistant <span className="coming-soon-badge">Soon</span>
-            </div>
+            <Link to="/ai-assistant" onClick={toggleMenu} className="mobile-nav-link">
+              AI Assistant
+            </Link>
             <div className="mobile-nav-link disabled">
               Wishlist (Soon)
             </div>
