@@ -358,5 +358,77 @@ export const api = {
       console.error('API Error (adminGetProducts):', error.message);
       throw error;
     }
+  },
+
+  // ─── Cart API ────────────────────────────────────────────────────────
+
+  /**
+   * Fetch the authenticated user's remote cart
+   */
+  async getCart() {
+    try {
+      const response = await fetch(`${API_BASE}/cart`, {
+        headers: getHeaders(null)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (getCart):', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Replace the entire cart with a new items array (used for sync & merge)
+   * @param {Array<{product: string, quantity: number}>} items
+   */
+  async updateCart(items) {
+    try {
+      const response = await fetch(`${API_BASE}/cart`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ items })
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (updateCart):', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Add or increment a single item in the remote cart
+   * @param {string} productId
+   * @param {number} quantity
+   */
+  async addItemToCart(productId, quantity = 1) {
+    try {
+      const response = await fetch(`${API_BASE}/cart`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ productId, quantity })
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (addItemToCart):', error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Remove a single item from the remote cart
+   * @param {string} productId
+   */
+  async removeCartItem(productId) {
+    try {
+      const response = await fetch(`${API_BASE}/cart/${productId}`, {
+        method: 'DELETE',
+        headers: getHeaders(null)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (removeCartItem):', error.message);
+      throw error;
+    }
   }
 };
+

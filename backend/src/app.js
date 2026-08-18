@@ -24,7 +24,7 @@ app.use(cors({
     const isAllowed = allowedOrigins.some(allowed => {
       if (allowed === '*') return true;
       return origin === allowed || origin.startsWith(allowed);
-    });
+    }) || origin.endsWith('.vercel.app'); // Allow any vercel deployment for preview URLs
 
     if (isAllowed || process.env.NODE_ENV !== 'production') {
       callback(null, true);
