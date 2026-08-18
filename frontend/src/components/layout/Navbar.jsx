@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Menu, X, Cpu, ShoppingCart, Heart, User, Sparkles, Sun, Moon } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
+  const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     return document.documentElement.getAttribute('data-theme') || 'light';
@@ -46,9 +48,25 @@ const Navbar = () => {
           <span className="nav-link disabled" title="Cart - Coming Soon">
             <ShoppingCart size={14} />
           </span>
-          <span className="nav-link disabled" title="Account - Coming Soon">
-            <User size={14} />
-          </span>
+
+          {user ? (
+            <div className="flex align-center gap-4">
+              <span className="nav-link user-profile-link" title={`Logged in as ${user.name}`} style={{ cursor: 'default' }}>
+                <User size={14} className="icon-spacing" />
+                <span className="user-name-text" style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.name.split(' ')[0]}
+                </span>
+              </span>
+              <button className="nav-link logout-btn btn-link" onClick={logout} title="Sign Out" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                Logout
+              </button>
+            </div>
+          ) : (
+            <NavLink to="/login" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+              <User size={14} className="icon-spacing" />
+              Login
+            </NavLink>
+          )}
         </nav>
 
         {/* Navbar Actions Wrapper (Theme Toggle & Mobile Menu) */}
@@ -82,9 +100,24 @@ const Navbar = () => {
             <div className="mobile-nav-link disabled">
               Cart (Soon)
             </div>
-            <div className="mobile-nav-link disabled">
-              Account (Soon)
-            </div>
+            {user ? (
+              <>
+                <div className="mobile-nav-link text-primary font-semibold">
+                  Hi, {user.name}
+                </div>
+                <button 
+                  className="mobile-nav-link btn-link text-left" 
+                  onClick={() => { logout(); toggleMenu(); }} 
+                  style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer' }}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link to="/login" onClick={toggleMenu} className="mobile-nav-link">
+                Login
+              </Link>
+            )}
           </nav>
         </div>
       )}
