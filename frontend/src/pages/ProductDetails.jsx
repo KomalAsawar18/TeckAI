@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Star, ShoppingCart, Heart, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Star, ShoppingCart, Heart, ShieldCheck, Truck, RefreshCw, Minus, Plus } from 'lucide-react';
 import { api } from '../services/api';
+import { useCart } from '../context/CartContext';
 import { formatPrice } from '../utils/format';
 import Loader from '../components/common/Loader';
 import ErrorMessage from '../components/common/ErrorMessage';
@@ -12,6 +13,28 @@ const ProductDetails = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [qty, setQty] = useState(1);
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+  const { addToCart } = useCart();
+
+  const handleAddToCart = async () => {
+    setAdding(true);
+    try {
+      const res = await addToCart(product, qty);
+      if (res.success) {
+        setAdded(true);
+        setTimeout(() => setAdded(false), 2000);
+      } else {
+        alert(res.message || 'Failed to add item to cart.');
+      }
+    } catch (err) {
+      alert('Failed to connect to cart service.');
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const fetchProduct = async () => {
     try {
@@ -84,20 +107,49 @@ const ProductDetails = () => {
 
           <p className="info-description text-secondary text-md mb-8">{description}</p>
 
-          {/* Phase 1 Disabled CTA Controls */}
+          {/* Dynamic Quantity Selector & Cart CTA Controls */}
           <div className="detail-ctas flex flex-col gap-3 mb-8">
+            {inStock && (
+              <div className="flex align-center gap-3 mb-2">
+                <span className="text-sm font-semibold text-secondary">Quantity:</span>
+                <div className="quantity-controls flex align-center border rounded" style={{ display: 'inline-flex', width: 'fit-content' }}>
+                  <button 
+                    className="qty-btn p-1 text-secondary hover-text-primary" 
+                    onClick={() => setQty(q => Math.max(1, q - 1))} 
+                    disabled={qty <= 1}
+                    type="button"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="qty-value px-3 font-semibold text-sm text-primary">
+                    {qty}
+                  </span>
+                  <button 
+                    className="qty-btn p-1 text-secondary hover-text-primary" 
+                    onClick={() => setQty(q => Math.min(stock, q + 1))} 
+                    disabled={qty >= stock}
+                    type="button"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-4">
-              <button className="btn btn-primary flex-grow disabled-detail-btn" disabled title="Cart is disabled in Phase 1">
-                <ShoppingCart size={16} />
-                <span>Add to Cart (Coming Soon)</span>
+              <button 
+                className="btn btn-primary flex-grow" 
+                disabled={!inStock || adding} 
+                onClick={handleAddToCart}
+                type="button"
+              >
+                <ShoppingCart size={16} className="icon-spacing" />
+                <span>{adding ? 'Adding...' : added ? 'Added to Cart ✓' : 'Add to Cart'}</span>
               </button>
-              <button className="btn btn-secondary disabled-detail-btn" disabled title="Wishlist is disabled in Phase 1">
+              <button className="btn btn-secondary disabled-detail-btn" disabled title="Wishlist is disabled in this phase" type="button">
                 <Heart size={16} />
               </button>
             </div>
-            <span className="text-xs text-muted text-center italic">
-              Shopping and order checkouts are disabled in this phase.
-            </span>
           </div>
 
           {/* Commerce Guarantees Layout */}

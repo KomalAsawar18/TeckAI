@@ -137,3 +137,32 @@
     display: block;
   }
 }
+
+.cart-badge-count {
+  background-color: var(--color-accent-highlight);
+  color: var(--color-bg-surface);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+  transform: translateY(-5px);
+}
+
+.cart-badge-count-mobile {
+  background-color: var(--color-accent-highlight);
+  color: var(--color-bg-surface);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+}
