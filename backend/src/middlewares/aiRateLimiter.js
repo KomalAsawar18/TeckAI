@@ -4,9 +4,13 @@ const logger = require('../config/logger');
 const ipRequestCounts = new Map();
 
 // Periodically clean IP request mapping to avoid leaks
-setInterval(() => {
+const interval = setInterval(() => {
   ipRequestCounts.clear();
 }, 60000); // Reset count every 1 minute
+
+if (interval.unref) {
+  interval.unref();
+}
 
 /**
  * Express middleware to rate limit requests to AI chat endpoints
