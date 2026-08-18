@@ -13,9 +13,9 @@
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-8) var(--spacing-10);
+  padding: 3rem;
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
   box-shadow: var(--shadow-lg);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
@@ -80,7 +80,7 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: 1.5rem;
 }
 
 .auth-form-group {
@@ -115,7 +115,7 @@
 
 .auth-input {
   width: 100%;
-  padding: var(--spacing-3) var(--spacing-4) var(--spacing-3) 2.5rem;
+  padding: 0.875rem 1rem 0.875rem 2.75rem;
   font-size: var(--font-size-sm);
   line-height: 1.5;
   border-radius: var(--radius-md);
@@ -167,16 +167,16 @@
 /* Action buttons */
 .auth-submit-btn {
   width: 100%;
-  padding: var(--spacing-3) var(--spacing-4);
+  padding: 0.875rem 1rem;
   font-weight: 600;
-  font-size: var(--font-size-sm);
+  font-size: 1rem;
   background-color: var(--color-primary);
   color: var(--color-text-on-accent);
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: background-color var(--transition-fast), transform var(--transition-fast);
-  margin-top: var(--spacing-2);
+  margin-top: 0.5rem;
 }
 
 .auth-submit-btn:hover:not(:disabled) {
