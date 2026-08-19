@@ -303,25 +303,7 @@
   color: var(--color-text-primary);
 }
 
-/* --- Hero Two Column Redesign --- */
-.hero-two-column.hero-section {
-  max-width: 100%;
-  display: flex;
-  text-align: left;
-  align-items: center;
-  padding: var(--spacing-8) 0;
-}
 
-.hero-left-column {
-  flex: 0 0 55%;
-  padding-right: var(--spacing-8);
-}
-
-.hero-right-column {
-  flex: 0 0 45%;
-  display: flex;
-  justify-content: flex-end;
-}
 
 .hero-image-contained {
   width: 100%;

@@ -94,7 +94,7 @@ const Home = () => {
             </div>
           )}
           <h1 className="hero-title text-4xl font-bold mb-4">
-            Find the right tech for your needs.
+            Find the right tech for your <br /> needs.
           </h1>
           <p className="hero-subtitle text-secondary mb-8 text-md max-w-sm">
             Search, compare, or ask TeckAI to find the right device for you.
