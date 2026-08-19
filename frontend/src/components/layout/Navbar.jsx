@@ -83,7 +83,6 @@ const Navbar = () => {
                   <button 
                     className="user-dropdown-btn" 
                     onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                    onBlur={() => setTimeout(() => setIsUserDropdownOpen(false), 200)}
                   >
                     <User size={16} />
                     <span>{user.name.split(' ')[0]}</span>
@@ -91,24 +90,31 @@ const Navbar = () => {
                   </button>
                   
                   {isUserDropdownOpen && (
-                    <div className="user-dropdown-menu">
-                      <Link to="/profile" className="dropdown-item">
-                        <User size={16} />
-                        <span>My Profile</span>
-                      </Link>
-                      <Link to="/orders" className="dropdown-item">
-                        <Package size={16} />
-                        <span>My Orders</span>
-                      </Link>
-                      <div className="dropdown-divider"></div>
-                      <button 
-                        className="dropdown-item logout-action"
-                        onClick={() => { logout(); navigate('/login'); }}
-                      >
-                        <LogOut size={16} />
-                        <span>Logout</span>
-                      </button>
-                    </div>
+                    <>
+                      <div 
+                        className="dropdown-overlay" 
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 199 }}
+                      />
+                      <div className="user-dropdown-menu" style={{ position: 'absolute', zIndex: 200 }}>
+                        <Link to="/profile" className="dropdown-item" onClick={() => setIsUserDropdownOpen(false)}>
+                          <User size={16} />
+                          <span>My Profile</span>
+                        </Link>
+                        <Link to="/orders" className="dropdown-item" onClick={() => setIsUserDropdownOpen(false)}>
+                          <Package size={16} />
+                          <span>My Orders</span>
+                        </Link>
+                        <div className="dropdown-divider"></div>
+                        <button 
+                          className="dropdown-item logout-action"
+                          onClick={() => { setIsUserDropdownOpen(false); logout(); navigate('/login'); }}
+                        >
+                          <LogOut size={16} />
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
