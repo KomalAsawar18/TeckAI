@@ -24,6 +24,8 @@ const Home = () => {
   const firstName = user?.name ? user.name.split(' ')[0] : '';
   const [welcomeVisible, setWelcomeVisible] = useState(showWelcome);
 
+  const [categories, setCategories] = useState([]);
+
   // Clear welcome state from browser history so it doesn't re-appear on refresh
   useEffect(() => {
     if (showWelcome) {
@@ -47,8 +49,18 @@ const Home = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const res = await api.getCategories();
+      setCategories(res.data);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    }
+  };
+
   useEffect(() => {
     fetchFeatured();
+    fetchCategories();
   }, []);
 
   const handleSearchSubmit = (e) => {
@@ -58,11 +70,14 @@ const Home = () => {
     }
   };
 
-  const categories = [
-    { name: 'Laptops', slug: 'laptops', icon: <Laptop size={24} />, count: '10 products' },
-    { name: 'Headphones', slug: 'headphones', icon: <Headphones size={24} />, count: '6 products' },
-    { name: 'Keyboards', slug: 'keyboards', icon: <Keyboard size={24} />, count: '5 products' }
-  ];
+  const getCategoryIcon = (slug) => {
+    switch (slug.toLowerCase()) {
+      case 'laptops': return <Laptop size={24} />;
+      case 'headphones': return <Headphones size={24} />;
+      case 'keyboards': return <Keyboard size={24} />;
+      default: return <Cpu size={24} />;
+    }
+  };
 
   return (
     <div className="home-page container fade-in">
@@ -83,22 +98,22 @@ const Home = () => {
 
         {/* Search & AI Query Bar */}
         <form onSubmit={handleSearchSubmit} className="search-query-container max-w-xl mx-auto">
-          <input 
-            type="text" 
-            className="home-search-input" 
+          <input
+            type="text"
+            className="home-search-input"
             placeholder="What are you building today?"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="btn btn-primary"
             style={{ marginRight: '6px' }}
           >
             Search
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="btn btn-secondary"
             onClick={() => {
               navigate('/ai-assistant', { state: { initialMessage: searchQuery } });
@@ -127,11 +142,11 @@ const Home = () => {
           {categories.map((cat) => (
             <Link key={cat.slug} to={`/products?category=${cat.slug}`} className="card category-card flex align-center p-6 gap-4">
               <div className="category-icon-wrapper flex justify-center align-center">
-                {cat.icon}
+                {getCategoryIcon(cat.slug)}
               </div>
               <div className="category-card-info">
                 <h3 className="category-name text-md font-bold">{cat.name}</h3>
-                <span className="category-count text-xs text-muted">{cat.count}</span>
+                {/* Count removed since it requires backend aggregation */}
               </div>
             </Link>
           ))}
