@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { AlertCircle, User, Lock, Mail, Eye, EyeOff, Cpu } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import AuthLayout from '../components/auth/AuthLayout';
 import './auth.css';
 
 const Register = () => {
@@ -55,14 +56,10 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-page-container fade-in">
+    <AuthLayout>
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">
-            <Cpu className="logo-icon" size={24} />
-            <span>Teck<span style={{ color: 'var(--color-accent-highlight)' }}>AI</span></span>
-          </div>
-          <h1 className="auth-title">Create Account</h1>
+          <h1 className="auth-title">Create your account</h1>
           <p className="auth-subtitle">Register to explore curated developer gear</p>
         </div>
 
@@ -77,7 +74,6 @@ const Register = () => {
           <div className="auth-form-group">
             <label className="auth-label" htmlFor="name">Name</label>
             <div className="auth-input-wrapper">
-              <User size={16} className="auth-input-icon" />
               <input
                 id="name"
                 type="text"
@@ -93,7 +89,6 @@ const Register = () => {
           <div className="auth-form-group">
             <label className="auth-label" htmlFor="email">Email</label>
             <div className="auth-input-wrapper">
-              <Mail size={16} className="auth-input-icon" />
               <input
                 id="email"
                 type="email"
@@ -109,7 +104,6 @@ const Register = () => {
           <div className="auth-form-group">
             <label className="auth-label" htmlFor="password">Password</label>
             <div className="auth-input-wrapper">
-              <Lock size={16} className="auth-input-icon" />
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -129,13 +123,11 @@ const Register = () => {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <p className="text-xs text-muted" style={{ marginTop: '2px' }}>* Password must be at least 6 characters long.</p>
           </div>
 
           <div className="auth-form-group">
             <label className="auth-label" htmlFor="confirmPassword">Confirm Password</label>
             <div className="auth-input-wrapper">
-              <Lock size={16} className="auth-input-icon" />
               <input
                 id="confirmPassword"
                 type={showPassword ? "text" : "password"}
@@ -161,7 +153,7 @@ const Register = () => {
           </Link>
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 

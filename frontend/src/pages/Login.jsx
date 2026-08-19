@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { AlertCircle, Lock, Mail, Sparkles, Heart, ShoppingCart, Eye, EyeOff, Cpu } from 'lucide-react';
+import { AlertCircle, Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import AuthLayout from '../components/auth/AuthLayout';
 import './auth.css';
 
 const Login = () => {
@@ -55,15 +56,11 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-page-container fade-in">
+    <AuthLayout>
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">
-            <Cpu className="logo-icon" size={24} />
-            <span>Teck<span style={{ color: 'var(--color-accent-highlight)' }}>AI</span></span>
-          </div>
           <h1 className="auth-title">Welcome back</h1>
-          <p className="auth-subtitle">Sign in to continue shopping</p>
+          <p className="auth-subtitle">Sign in to continue to TeckAI.</p>
         </div>
 
         {error && (
@@ -77,7 +74,6 @@ const Login = () => {
           <div className="auth-form-group">
             <label className="auth-label" htmlFor="email">Email</label>
             <div className="auth-input-wrapper">
-              <Mail size={16} className="auth-input-icon" />
               <input
                 id="email"
                 type="email"
@@ -93,7 +89,6 @@ const Login = () => {
           <div className="auth-form-group">
             <label className="auth-label" htmlFor="password">Password</label>
             <div className="auth-input-wrapper">
-              <Lock size={16} className="auth-input-icon" />
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -121,13 +116,13 @@ const Login = () => {
         </form>
 
         <div className="auth-footer">
-          Don't have an account?{' '}
+          New to TeckAI?{' '}
           <Link to="/register" className="auth-footer-link">
-            Sign Up
+            Create account
           </Link>
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 
