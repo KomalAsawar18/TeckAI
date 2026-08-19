@@ -12,6 +12,7 @@ import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderDetails from './pages/OrderDetails';
+import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminRoute from './components/common/AdminRoute';
 import { AuthProvider } from './context/AuthContext';
@@ -112,10 +113,7 @@ function App() {
                   path="/profile" 
                   element={
                     <ProtectedRoute>
-                      <div className="container py-16 text-center">
-                        <h1 className="text-xl font-bold mb-2">My Profile</h1>
-                        <p className="text-secondary text-sm">Account details management coming soon.</p>
-                      </div>
+                      <Profile />
                     </ProtectedRoute>
                   } 
                 />

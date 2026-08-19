@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, Cpu, ShoppingCart, Heart, User, Sparkles, Sun, Moon } from 'lucide-react';
+import { Menu, X, Cpu, ShoppingCart, Heart, User, Sparkles, Sun, Moon, ChevronDown, LogOut, Package } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
@@ -11,6 +11,7 @@ const Navbar = () => {
   const { cartCount } = useCart();
   const { wishlistCount } = useWishlist();
   const [isOpen, setIsOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const [theme, setTheme] = useState(() => {
     return document.documentElement.getAttribute('data-theme') || 'light';
@@ -80,18 +81,39 @@ const Navbar = () => {
                     Admin Area
                   </NavLink>
                 )}
-                <NavLink to="/profile" className={({ isActive }) => isActive ? "nav-link user-profile-link active" : "nav-link user-profile-link"} title={`Logged in as ${user.name}`}>
-                  <User size={14} className="icon-spacing" />
-                  <span className="user-name-text">Hi, {user.name.split(' ')[0]}</span>
-                </NavLink>
-                <button 
-                  className="nav-link logout-btn btn-link" 
-                  onClick={() => { logout(); navigate('/login'); }} 
-                  title="Sign Out" 
-                  style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                >
-                  Logout
-                </button>
+                
+                <div className="user-dropdown-container">
+                  <button 
+                    className="user-dropdown-btn" 
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                    onBlur={() => setTimeout(() => setIsUserDropdownOpen(false), 200)}
+                  >
+                    <User size={16} />
+                    <span>{user.name.split(' ')[0]}</span>
+                    <ChevronDown size={14} className={`dropdown-arrow ${isUserDropdownOpen ? 'open' : ''}`} />
+                  </button>
+                  
+                  {isUserDropdownOpen && (
+                    <div className="user-dropdown-menu">
+                      <Link to="/profile" className="dropdown-item">
+                        <User size={16} />
+                        <span>My Profile</span>
+                      </Link>
+                      <Link to="/orders" className="dropdown-item">
+                        <Package size={16} />
+                        <span>My Orders</span>
+                      </Link>
+                      <div className="dropdown-divider"></div>
+                      <button 
+                        className="dropdown-item logout-action"
+                        onClick={() => { logout(); navigate('/login'); }}
+                      >
+                        <LogOut size={16} />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           ) : (

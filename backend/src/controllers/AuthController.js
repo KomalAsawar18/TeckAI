@@ -159,6 +159,55 @@ class AuthController {
       next(error);
     }
   }
+
+  /**
+   * Update authenticated user profile
+   */
+  async updateProfile(req, res, next) {
+    try {
+      const user = await User.findById(req.user._id);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: { message: 'User not found' }
+        });
+      }
+
+      // Explicitly pick only allowed fields
+      if (req.body.name !== undefined) user.name = req.body.name;
+      if (req.body.phone !== undefined) user.phone = req.body.phone;
+      
+      if (req.body.defaultShippingAddress) {
+        if (!user.defaultShippingAddress) {
+          user.defaultShippingAddress = {};
+        }
+        if (req.body.defaultShippingAddress.addressLine !== undefined) user.defaultShippingAddress.addressLine = req.body.defaultShippingAddress.addressLine;
+        if (req.body.defaultShippingAddress.city !== undefined) user.defaultShippingAddress.city = req.body.defaultShippingAddress.city;
+        if (req.body.defaultShippingAddress.postalCode !== undefined) user.defaultShippingAddress.postalCode = req.body.defaultShippingAddress.postalCode;
+        if (req.body.defaultShippingAddress.country !== undefined) user.defaultShippingAddress.country = req.body.defaultShippingAddress.country;
+      }
+
+      const updatedUser = await user.save();
+
+      logger.info(`User profile updated successfully: ${updatedUser.email}`);
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          _id: updatedUser._id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          phone: updatedUser.phone,
+          defaultShippingAddress: updatedUser.defaultShippingAddress
+        }
+      });
+    } catch (error) {
+      logger.error(`UpdateProfile controller error: ${error.message}`);
+      next(error);
+    }
+  }
 }
 
 module.exports = new AuthController();

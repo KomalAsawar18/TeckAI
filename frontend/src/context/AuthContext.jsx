@@ -75,6 +75,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (profileData) => {
+    setLoading(true);
+    try {
+      const res = await api.updateProfile(profileData);
+      if (res.success) {
+        const updatedUser = res.data;
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        return { success: true, user: updatedUser };
+      }
+      return { success: false, message: 'Failed to update profile' };
+    } catch (error) {
+      console.error('Update profile failed:', error.message);
+      return { success: false, message: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -82,7 +101,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

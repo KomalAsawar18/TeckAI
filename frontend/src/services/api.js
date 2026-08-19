@@ -153,6 +153,23 @@ export const api = {
   },
 
   /**
+   * Update active session profile
+   */
+  async updateProfile(profileData) {
+    try {
+      const response = await fetch(`${API_BASE}/auth/me`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(profileData)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('API Error (updateProfile):', error.message);
+      throw error;
+    }
+  },
+
+  /**
    * Fetch user's wishlist
    */
   async getWishlist() {
@@ -431,4 +448,3 @@ export const api = {
     }
   }
 };
-

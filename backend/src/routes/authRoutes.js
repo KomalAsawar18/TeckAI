@@ -9,5 +9,6 @@ router.post('/login', (req, res, next) => authController.login(req, res, next));
 
 // Protected profile route
 router.get('/me', protect, (req, res, next) => authController.getMe(req, res, next));
+router.put('/me', protect, (req, res, next) => authController.updateProfile(req, res, next));
 
 module.exports = router;

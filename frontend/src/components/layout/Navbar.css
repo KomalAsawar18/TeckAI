@@ -138,6 +138,89 @@
   }
 }
 
+/* User Dropdown Styles */
+.user-dropdown-container {
+  position: relative;
+  margin-left: var(--spacing-2);
+}
+
+.user-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.user-dropdown-btn:hover {
+  background-color: var(--color-border);
+}
+
+.dropdown-arrow {
+  transition: transform var(--transition-fast);
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + var(--spacing-2));
+  right: 0;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-1) 0;
+  animation: fadeIn var(--transition-fast) ease-out;
+  z-index: 200;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.dropdown-item.logout-action {
+  color: var(--color-error);
+}
+
+.dropdown-item.logout-action:hover {
+  background-color: rgba(220, 38, 38, 0.1);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: var(--color-border);
+  margin: var(--spacing-1) 0;
+}
+
 .cart-badge-count {
   background-color: var(--color-accent-highlight);
   color: var(--color-bg-surface);
