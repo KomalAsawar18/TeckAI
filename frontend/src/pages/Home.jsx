@@ -82,51 +82,59 @@ const Home = () => {
   return (
     <div className="home-page container fade-in">
       {/* Hero / Personalized Welcome Section */}
-      <section className="hero-section text-center py-16">
-        {welcomeVisible && firstName && (
-          <div className="hero-greeting-container">
-            <span className="hero-greeting">
-              {justRegistered
-                ? `Welcome to TeckAI, ${firstName}! 🎉`
-                : `Welcome back, ${firstName}!`}
-            </span>
-          </div>
-        )}
-        <h1 className="hero-title text-4xl font-bold mb-6">
-          Find the right tech for your needs.
-        </h1>
+      <section className="hero-section hero-two-column mb-12">
+        <div className="hero-left-column">
+          {welcomeVisible && firstName && (
+            <div className="hero-greeting-container mb-4">
+              <span className="hero-greeting">
+                {justRegistered
+                  ? `Welcome to TeckAI, ${firstName}! 🎉`
+                  : `Welcome back, ${firstName}!`}
+              </span>
+            </div>
+          )}
+          <h1 className="hero-title text-4xl font-bold mb-4">
+            Find the right tech for your needs.
+          </h1>
+          <p className="hero-subtitle text-secondary mb-8 text-md max-w-sm">
+            Search, compare, or ask TeckAI to find the right device for you.
+          </p>
 
-        {/* Search & AI Query Bar */}
-        <form onSubmit={handleSearchSubmit} className="search-query-container max-w-xl mx-auto">
-          <input
-            type="text"
-            className="home-search-input"
-            placeholder="What are you building today?"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+          {/* Search & AI Query Bar */}
+          <form onSubmit={handleSearchSubmit} className="hero-search-flex-container">
+            <input
+              type="text"
+              className="home-search-input hero-input-flex"
+              placeholder="What are you building today?"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button
+              type="submit"
+              className="btn btn-primary"
+            >
+              Search
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary flex align-center gap-2 whitespace-nowrap"
+              onClick={() => {
+                navigate('/ai-assistant', { state: { initialMessage: searchQuery } });
+              }}
+            >
+              <Sparkles size={15} />
+              <span>Ask TeckAI</span>
+            </button>
+          </form>
+        </div>
+        <div className="hero-right-column flex justify-end align-center">
+          <img 
+            src="/hero-composition.png" 
+            alt="TeckAI Premium Tech Gear" 
+            className="hero-image-contained" 
+            loading="eager"
           />
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ marginRight: '6px' }}
-          >
-            Search
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => {
-              navigate('/ai-assistant', { state: { initialMessage: searchQuery } });
-            }}
-          >
-            <Sparkles size={15} />
-            <span>Ask TeckAI</span>
-          </button>
-        </form>
-
-        <p className="hero-subtitle text-md text-secondary mt-6">
-          TeckAI combines a developer-grade catalog with natural language intelligence to guide your search for laptops, keyboards, and noise-cancelling headphones.
-        </p>
+        </div>
       </section>
 
       {/* Main Categories Section */}
