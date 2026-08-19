@@ -101,29 +101,34 @@ const Home = () => {
           </p>
 
           {/* Search & AI Query Bar */}
-          <form onSubmit={handleSearchSubmit} className="hero-search-flex-container">
-            <input
-              type="text"
-              className="home-search-input hero-input-minimal"
-              placeholder="What are you building today?"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button
-              type="submit"
-              className="btn hero-btn-search"
-            >
-              Search
-            </button>
+          <form onSubmit={handleSearchSubmit} className="hero-search-wrapper mt-8">
+            <div className="hero-search-input-group">
+              <input
+                type="text"
+                className="home-search-input hero-input-minimal"
+                placeholder="What are you building today?"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="btn hero-btn-search"
+              >
+                Search
+              </button>
+            </div>
             <button
               type="button"
-              className="btn hero-btn-ask flex align-center gap-2 whitespace-nowrap"
+              className="btn hero-btn-ask flex align-center gap-2"
               onClick={() => {
                 navigate('/ai-assistant', { state: { initialMessage: searchQuery } });
               }}
             >
               <Sparkles size={15} />
-              <span>Ask TeckAI</span>
+              <div className="flex flex-col text-left leading-tight text-xs">
+                <span>Ask</span>
+                <span>TeckAI</span>
+              </div>
             </button>
           </form>
         </div>
