@@ -104,20 +104,20 @@ const Home = () => {
           <form onSubmit={handleSearchSubmit} className="hero-search-flex-container">
             <input
               type="text"
-              className="home-search-input hero-input-flex"
+              className="home-search-input hero-input-minimal"
               placeholder="What are you building today?"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn hero-btn-search"
             >
               Search
             </button>
             <button
               type="button"
-              className="btn btn-secondary flex align-center gap-2 whitespace-nowrap"
+              className="btn hero-btn-ask flex align-center gap-2 whitespace-nowrap"
               onClick={() => {
                 navigate('/ai-assistant', { state: { initialMessage: searchQuery } });
               }}
