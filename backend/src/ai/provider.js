@@ -1,16 +1,16 @@
 const logger = require('../config/logger');
 
-class GeminiProvider {
+class OpenRouterProvider {
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY;
+    this.apiKey = process.env.OPENROUTER_API_KEY;
     if (!this.apiKey) {
-      logger.error('GEMINI_API_KEY is not defined in the environment variables.');
+      logger.error('OPENROUTER_API_KEY is not defined in the environment variables.');
     }
-    this.modelName = 'gemini-3.5-flash';
+    this.modelName = 'openai/gpt-4o-mini';
   }
 
   /**
-   * Generates a text response from Gemini using direct REST API fetch
+   * Generates a text response from OpenRouter (GPT-4o-mini)
    * @param {Object} params
    * @param {string} params.prompt
    * @param {string} [params.systemInstruction]
@@ -19,39 +19,37 @@ class GeminiProvider {
    */
   async generateText({ prompt, systemInstruction, history = [] }) {
     if (!this.apiKey) {
-      throw new Error('AI Provider not initialized. Missing GEMINI_API_KEY.');
+      throw new Error('AI Provider not initialized. Missing OPENROUTER_API_KEY.');
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent?key=${this.apiKey}`;
+    const url = 'https://openrouter.ai/api/v1/chat/completions';
+    const messages = [];
 
-    // Structure contents array
-    const contents = [];
+    if (systemInstruction) {
+      messages.push({
+        role: 'system',
+        content: systemInstruction
+      });
+    }
 
-    // Append chat history (role must be 'user' or 'model')
     if (history && history.length > 0) {
       history.forEach(msg => {
-        contents.push({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.content || msg.text || '' }]
+        messages.push({
+          role: msg.role === 'model' || msg.role === 'assistant' ? 'assistant' : 'user',
+          content: msg.content || msg.text || ''
         });
       });
     }
 
-    // Add current user prompt
-    contents.push({
+    messages.push({
       role: 'user',
-      parts: [{ text: prompt }]
+      content: prompt
     });
 
     const payload = {
-      contents
+      model: this.modelName,
+      messages: messages
     };
-
-    if (systemInstruction) {
-      payload.systemInstruction = {
-        parts: [{ text: systemInstruction }]
-      };
-    }
 
     try {
       const start = Date.now();
@@ -59,7 +57,10 @@ class GeminiProvider {
         fetch(url, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://teckai-backend.vercel.app',
+            'X-Title': 'TeckAI Assistant'
           },
           body: JSON.stringify(payload)
         }),
@@ -73,19 +74,19 @@ class GeminiProvider {
         throw new Error(data.error?.message || `HTTP error ${response.status}`);
       }
 
-      logger.info(`Gemini REST API call succeeded in ${latency}ms`);
+      logger.info(`OpenRouter API call succeeded in ${latency}ms`);
       
-      const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const candidateText = data.choices?.[0]?.message?.content;
       if (!candidateText) {
-        throw new Error('Empty response received from Gemini API');
+        throw new Error('Empty response received from OpenRouter API');
       }
 
       return candidateText;
     } catch (error) {
-      logger.error(`Gemini generation error: ${error.message}`);
+      logger.error(`OpenRouter generation error: ${error.message}`);
       throw error;
     }
   }
 }
 
-module.exports = new GeminiProvider();
+module.exports = new OpenRouterProvider();
