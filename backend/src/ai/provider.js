@@ -6,7 +6,7 @@ class GeminiProvider {
     if (!this.apiKey) {
       logger.error('GEMINI_API_KEY is not defined in the environment variables.');
     }
-    this.modelName = 'gemini-flash-latest';
+    this.modelName = 'gemini-3.5-flash';
   }
 
   /**
