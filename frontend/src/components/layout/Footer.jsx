@@ -8,7 +8,7 @@ const Footer = () => {
     <footer className="footer-container">
       <div className="container footer-content">
         <p className="footer-copyright">
-          &copy; {currentYear} TeckAI. All rights reserved.
+          &copy; {currentYear} Komal Asawar. TeckAI. All rights reserved.
         </p>
         <p className="footer-notes text-xs">
           Smarter Tech. Better Choices. Powered by AI.
