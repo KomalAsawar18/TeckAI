@@ -71,9 +71,6 @@ const Navbar = () => {
                 <ShoppingCart size={14} className="icon-spacing" />
                 {cartCount > 0 && <span className="cart-badge-count">{cartCount}</span>}
               </NavLink>
-              <NavLink to="/orders" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-                Orders
-              </NavLink>
               
               <div className="flex align-center gap-4 ml-4">
                 {user.role === 'admin' && (
@@ -174,12 +171,13 @@ const Navbar = () => {
                 <Link to="/cart" onClick={toggleMenu} className="mobile-nav-link flex align-center gap-2">
                   Cart {cartCount > 0 && <span className="cart-badge-count-mobile">{cartCount}</span>}
                 </Link>
-                <Link to="/orders" onClick={toggleMenu} className="mobile-nav-link">
-                  Orders
-                </Link>
                 <Link to="/profile" onClick={toggleMenu} className="mobile-nav-link flex align-center gap-2">
                   <User size={14} />
-                  <span>Profile (Hi, {user.name.split(' ')[0]})</span>
+                  <span>My Profile</span>
+                </Link>
+                <Link to="/orders" onClick={toggleMenu} className="mobile-nav-link flex align-center gap-2">
+                  <Package size={14} />
+                  <span>My Orders</span>
                 </Link>
                 {user.role === 'admin' && (
                   <Link to="/admin" onClick={toggleMenu} className="mobile-nav-link" style={{ color: 'var(--color-error)', fontWeight: 'bold' }}>
