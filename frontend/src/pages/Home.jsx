@@ -82,10 +82,10 @@ const Home = () => {
   return (
     <div className="home-page container fade-in">
       {/* Hero / Personalized Welcome Section */}
-      <section className="hero-section hero-two-column mb-12">
+      <section className="hero-banner-unified mb-12">
         <div className="hero-left-column">
           {welcomeVisible && firstName && (
-            <div className="hero-greeting-container mb-4">
+            <div className="hero-greeting-container mb-4 text-left justify-start">
               <span className="hero-greeting">
                 {justRegistered
                   ? `Welcome to TeckAI, ${firstName}! 🎉`
@@ -93,42 +93,34 @@ const Home = () => {
               </span>
             </div>
           )}
-          <h1 className="hero-title text-4xl font-bold mb-4">
-            Find the right tech for your <br /> needs.
+          <h1 className="hero-title text-5xl font-bold mb-4 text-black leading-tight">
+            Find the right tech <br />for your needs.
           </h1>
-          <p className="hero-subtitle text-secondary mb-8 text-md max-w-sm">
+          <p className="hero-subtitle text-secondary mb-8 text-md max-w-sm ml-0">
             Search, compare, or ask TeckAI to find the right device for you.
           </p>
 
           {/* Search & AI Query Bar */}
-          <form onSubmit={handleSearchSubmit} className="hero-search-wrapper mt-8">
-            <div className="hero-search-input-group">
+          <form onSubmit={handleSearchSubmit} className="hero-unified-search-box mt-8">
+            <div className="search-input-wrapper flex-grow flex align-center px-4">
+              <svg xmlns="http://www.w3.org/20event/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary mr-3"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <input
                 type="text"
-                className="home-search-input hero-input-minimal"
+                className="unified-search-input"
                 placeholder="What are you building today?"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <button
-                type="submit"
-                className="btn hero-btn-search"
-              >
-                Search
-              </button>
             </div>
             <button
               type="button"
-              className="btn hero-btn-ask flex align-center gap-2"
+              className="btn unified-btn-ask flex align-center gap-2 whitespace-nowrap"
               onClick={() => {
                 navigate('/ai-assistant', { state: { initialMessage: searchQuery } });
               }}
             >
-              <Sparkles size={15} />
-              <div className="flex flex-col text-left leading-tight text-xs">
-                <span>Ask</span>
-                <span>TeckAI</span>
-              </div>
+              <Sparkles size={16} />
+              <span>Ask TeckAI</span>
             </button>
           </form>
         </div>
@@ -136,7 +128,7 @@ const Home = () => {
           <img 
             src="/hero-composition.png" 
             alt="TeckAI Premium Tech Gear" 
-            className="hero-image-contained" 
+            className="hero-image-blended" 
             loading="eager"
           />
         </div>
@@ -145,22 +137,24 @@ const Home = () => {
       {/* Main Categories Section */}
       <section className="home-section mb-12">
         <div className="section-header flex justify-between align-center mb-6">
-          <h2 className="section-title text-2xl font-bold">Featured Categories</h2>
-          <Link to="/products" className="text-sm font-semibold flex align-center gap-1 text-accent-highlight">
-            <span>View All</span>
-            <ArrowRight size={14} />
-          </Link>
+          <h2 className="section-title text-2xl font-bold text-black">Shop by Category</h2>
         </div>
-        <div className="grid grid-cols-3 gap-6">
+        <div className="category-unified-row flex gap-6">
           {categories.map((cat) => (
-            <Link key={cat.slug} to={`/products?category=${cat.slug}`} className="card category-card flex align-center p-6 gap-4">
-              <div className="category-icon-wrapper flex justify-center align-center">
+            <Link key={cat.slug} to={`/products?category=${cat.slug}`} className="card category-unified-card flex align-center p-4 gap-4 flex-1">
+              <div className="category-icon-square flex justify-center align-center">
                 {getCategoryIcon(cat.slug)}
               </div>
-              <div className="category-card-info">
-                <h3 className="category-name text-md font-bold">{cat.name}</h3>
-                {/* Count removed since it requires backend aggregation */}
+              <div className="category-card-info flex-grow">
+                <h3 className="category-name font-bold text-black">{cat.name}</h3>
+                <p className="category-subtitle text-xs text-secondary mt-1">
+                  {cat.slug === 'laptops' && 'Powerful performance. Anywhere.'}
+                  {cat.slug === 'keyboards' && 'Built for speed. Made to last.'}
+                  {cat.slug === 'headphones' && 'Premium sound. Pure clarity.'}
+                  {cat.slug === 'monitors' && 'Crystal clear displays.'}
+                </p>
               </div>
+              <ArrowRight size={16} className="text-secondary ml-auto" />
             </Link>
           ))}
         </div>
