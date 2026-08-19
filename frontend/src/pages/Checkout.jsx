@@ -227,9 +227,9 @@ const Checkout = () => {
                           className="item-preview-img" 
                         />
                       )}
-                      <div>
-                        <span className="font-semibold text-primary block text-xs truncate max-w-40">{product.name}</span>
-                        <span className="text-muted text-xs block">Qty: {item.quantity}</span>
+                      <div className="item-name-qty">
+                        <span className="font-semibold text-primary block text-xs checkout-item-name">{product.name}</span>
+                        <span className="text-muted text-xs block mt-1">Qty: {item.quantity}</span>
                       </div>
                     </div>
                     <span className="font-bold text-primary text-xs">
