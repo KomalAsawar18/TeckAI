@@ -43,8 +43,7 @@ class AiController {
       return res.status(503).json({
         success: false,
         error: {
-          message: 'The AI Assistant is currently experiencing high demand or is temporarily unavailable. Please try again in a few moments.',
-          details: error.message
+          message: 'The AI Assistant is currently experiencing high demand or is temporarily unavailable. Please try again in a few moments.'
         }
       });
     }
