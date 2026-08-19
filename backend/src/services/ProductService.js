@@ -39,8 +39,19 @@ class ProductService {
     if (parsedMinPrice !== undefined && isNaN(parsedMinPrice)) {
       throw new BadRequestError('Invalid minPrice value');
     }
+    if (parsedMinPrice !== undefined && parsedMinPrice < 0) {
+      throw new BadRequestError('minPrice cannot be negative');
+    }
+
     if (parsedMaxPrice !== undefined && isNaN(parsedMaxPrice)) {
       throw new BadRequestError('Invalid maxPrice value');
+    }
+    if (parsedMaxPrice !== undefined && parsedMaxPrice < 0) {
+      throw new BadRequestError('maxPrice cannot be negative');
+    }
+
+    if (parsedMinPrice !== undefined && parsedMaxPrice !== undefined && parsedMinPrice > parsedMaxPrice) {
+      throw new BadRequestError('minPrice cannot exceed maxPrice');
     }
 
     const result = await productRepository.findAndCount({

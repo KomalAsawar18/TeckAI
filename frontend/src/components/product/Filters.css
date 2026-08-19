@@ -78,6 +78,13 @@
   padding: var(--spacing-2) var(--spacing-3);
 }
 
+.price-error-msg {
+  color: var(--color-error);
+  font-size: 12px;
+  margin-top: var(--spacing-2);
+  line-height: 1.2;
+}
+
 .btn-clear-filters {
   width: 100%;
 }

@@ -30,12 +30,14 @@ const Filters = ({ categories = [], filters = {}, onFilterChange, onClear }) => 
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const [minPriceInput, setMinPriceInput] = useState(filters.minPrice || '');
   const [maxPriceInput, setMaxPriceInput] = useState(filters.maxPrice || '');
+  const [priceError, setPriceError] = useState('');
 
   // Synchronize state with URL parameters when filters prop updates
   useEffect(() => {
     setSearchInput(filters.search || '');
     setMinPriceInput(filters.minPrice || '');
     setMaxPriceInput(filters.maxPrice || '');
+    setPriceError('');
   }, [filters.search, filters.minPrice, filters.maxPrice]);
 
   const handleSearchSubmit = (e) => {
@@ -45,6 +47,25 @@ const Filters = ({ categories = [], filters = {}, onFilterChange, onClear }) => 
 
   const handlePriceSubmit = (e) => {
     e.preventDefault();
+    
+    // Validation
+    const minVal = minPriceInput !== '' ? Number(minPriceInput) : null;
+    const maxVal = maxPriceInput !== '' ? Number(maxPriceInput) : null;
+
+    if (minVal !== null && minVal < 0) {
+      setPriceError('Prices cannot be negative.');
+      return;
+    }
+    if (maxVal !== null && maxVal < 0) {
+      setPriceError('Prices cannot be negative.');
+      return;
+    }
+    if (minVal !== null && maxVal !== null && minVal > maxVal) {
+      setPriceError('Minimum price cannot exceed maximum price.');
+      return;
+    }
+
+    setPriceError('');
     onFilterChange({
       minPrice: minPriceInput,
       maxPrice: maxPriceInput
@@ -117,7 +138,10 @@ const Filters = ({ categories = [], filters = {}, onFilterChange, onClear }) => 
             className="input-text price-input"
             placeholder="Min"
             value={minPriceInput}
-            onChange={(e) => setMinPriceInput(e.target.value)}
+            onChange={(e) => {
+              setMinPriceInput(e.target.value);
+              setPriceError('');
+            }}
           />
           <span className="text-muted">-</span>
           <input
@@ -125,10 +149,14 @@ const Filters = ({ categories = [], filters = {}, onFilterChange, onClear }) => 
             className="input-text price-input"
             placeholder="Max"
             value={maxPriceInput}
-            onChange={(e) => setMaxPriceInput(e.target.value)}
+            onChange={(e) => {
+              setMaxPriceInput(e.target.value);
+              setPriceError('');
+            }}
           />
           <button type="submit" className="btn btn-secondary btn-price-apply">Go</button>
         </form>
+        {priceError && <p className="price-error-msg">{priceError}</p>}
       </div>
 
       {/* Sort Options */}
