@@ -7,7 +7,7 @@
   margin-bottom: 40px;
   overflow: hidden;
   border-radius: 24px;
-  background: #eef2f6;
+  background: #f2f2f2;
   border: 1px solid var(--color-border);
 }
 
@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: var(--spacing-8) var(--spacing-12);
+  padding: 0 40px 0 60px;
 }
 
 .home-hero-welcome {
@@ -108,7 +108,7 @@
 }
 
 .home-hero-visual img {
-  max-width: 90%;
+  max-width: 95%;
   max-height: 85%;
   object-fit: contain;
 }
