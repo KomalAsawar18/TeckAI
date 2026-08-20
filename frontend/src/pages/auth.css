@@ -19,10 +19,6 @@
   overflow: hidden;
 }
 
-/* Add a subtle dark mode background glow effect if needed */
-[data-theme='dark'] .auth-left-panel {
-  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.1) 0%, var(--color-bg-base) 50%);
-}
 
 .auth-brand-content {
   display: flex;

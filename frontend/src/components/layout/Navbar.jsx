@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, Cpu, ShoppingCart, Heart, User, Sparkles, Sun, Moon, ChevronDown, LogOut, Package } from 'lucide-react';
+import { Menu, X, Cpu, ShoppingCart, Heart, User, Sparkles, ChevronDown, LogOut, Package } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
@@ -13,18 +13,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const navigate = useNavigate();
-  const [theme, setTheme] = useState(() => {
-    return document.documentElement.getAttribute('data-theme') || 'light';
-  });
-
   const toggleMenu = () => setIsOpen(!isOpen);
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(nextTheme);
-    document.documentElement.setAttribute('data-theme', nextTheme);
-    localStorage.setItem('theme', nextTheme);
-  };
 
   const handleAiAssistantClick = (e) => {
     if (!user) {
@@ -143,12 +132,8 @@ const Navbar = () => {
           )}
         </nav>
 
-        {/* Navbar Actions Wrapper (Theme Toggle & Mobile Menu) */}
+        {/* Navbar Actions Wrapper (Mobile Menu) */}
         <div className="navbar-actions flex align-center gap-4">
-          <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle light and dark theme">
-            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-          </button>
-          
           <button className="mobile-menu-btn" onClick={toggleMenu} aria-label="Toggle navigation menu">
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
