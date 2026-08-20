@@ -2,11 +2,7 @@
    TECKAI HOME PAGE
    ========================================================= */
 
-
-/* =========================
-   HERO
-   ========================= */
-
+/* --- Hero Section --- */
 .home-hero {
   display: grid;
   grid-template-columns: 45% 55%;
@@ -121,192 +117,122 @@
   object-fit: contain;
 }
 
-
-
-/* =========================
-   COMMON HOME SECTIONS
-   ========================= */
-
+/* --- Common Sections --- */
 .home-section {
   margin-bottom: 44px;
 }
-
 
 .home-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   margin-bottom: 18px;
 }
 
-
 .home-section-header h2 {
   margin: 0;
-
   color: var(--color-text-primary);
-
   font-size: 1.55rem;
   font-weight: 700;
 }
 
-
-/* =========================
-   CATEGORY SECTION
-   ========================= */
-
+/* --- Category Section --- */
 .home-category-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
 }
 
-
 .home-category-card {
   display: flex;
   align-items: center;
-
   min-height: 96px;
-
   padding: 16px 18px;
-
   color: inherit;
   text-decoration: none;
-
   background: var(--color-bg-surface);
-
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-
-  box-shadow:
-    0 2px 8px rgba(15, 23, 42, 0.025);
-
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
 
 .home-category-card:hover {
   transform: translateY(-2px);
-
   border-color: rgba(37, 99, 235, 0.22);
-
-  box-shadow:
-    0 8px 20px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 }
-
 
 .home-category-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-
   width: 54px;
   height: 54px;
-
   margin-right: 16px;
-
   flex-shrink: 0;
-
   color: var(--color-accent-highlight);
-
   background: var(--color-accent-soft);
-
   border-radius: var(--radius-md);
 }
 
-
 .home-category-content {
   flex: 1;
-
   min-width: 0;
 }
 
-
 .home-category-content h3 {
   margin: 0;
-
   color: var(--color-text-primary);
-
   font-size: 1rem;
   font-weight: 700;
 }
 
-
 .home-category-content p {
   margin: 5px 0 0;
-
   color: var(--color-text-secondary);
-
   font-size: 0.76rem;
   line-height: 1.35;
 }
 
-
 .home-category-arrow {
   margin-left: 12px;
-
   flex-shrink: 0;
-
   color: var(--color-text-muted);
-
-  transition:
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
-
 
 .home-category-card:hover .home-category-arrow {
   transform: translateX(3px);
-
   color: var(--color-accent-highlight);
 }
 
-
-/* =========================
-   RECOMMENDED PRODUCTS
-   ========================= */
-
+/* --- Recommended Showcase --- */
 .home-recommended-section {
   margin-top: 4px;
 }
 
-
 .home-section-link {
   display: inline-flex;
   align-items: center;
-
   gap: 5px;
-
   color: var(--color-accent-highlight);
-
   text-decoration: none;
-
   font-size: 0.875rem;
   font-weight: 600;
 }
-
 
 .home-section-link:hover {
   text-decoration: underline;
 }
 
-
 .home-products-grid {
   display: grid;
-
   grid-template-columns: repeat(4, minmax(0, 1fr));
-
   gap: 20px;
 }
 
-
-/* =========================
-   AI CTA STRIP
-   ========================= */
-
+/* --- AI CTA Section --- */
 .home-ai-cta {
   display: flex;
   align-items: center;
@@ -351,158 +277,113 @@
   opacity: 0.9;
 }
 
-
-
-/* =========================
-   TABLET
-   ========================= */
-
+/* --- Tablet Media Queries --- */
 @media (max-width: 992px) {
   .home-hero {
     grid-template-columns: 1fr;
-
     height: auto;
   }
 
-
   .home-hero-content {
     align-items: center;
-
     padding: 46px 32px 28px;
-
     text-align: center;
   }
 
-
-  .home-hero-description {
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-
+  .home-hero-description,
   .home-hero-search {
     margin-left: auto;
     margin-right: auto;
   }
 
-
   .home-hero-visual {
     min-height: 290px;
-
     padding: 0 24px 22px;
   }
-
 
   .home-hero-visual img {
     width: 100%;
     height: 280px;
   }
 
-
   .home-category-grid {
     grid-template-columns: 1fr;
   }
-
 
   .home-products-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-
-/* =========================
-   MOBILE
-   ========================= */
-
+/* --- Mobile Media Queries --- */
 @media (max-width: 576px) {
   .home-hero {
     border-radius: 20px;
-
     margin-bottom: 30px;
   }
-
 
   .home-hero-content {
     padding: 32px 18px 22px;
   }
 
-
   .home-hero-title {
     font-size: 2.1rem;
   }
 
-
   .home-hero-description {
     margin-bottom: 20px;
-
     font-size: 0.92rem;
   }
-
 
   .home-hero-search {
     flex-direction: column;
     align-items: stretch;
-
     padding: 7px;
   }
-
 
   .home-hero-search-field {
     min-height: 46px;
   }
 
-
   .home-hero-ai-button {
     width: 100%;
   }
 
-
   .home-hero-visual {
     min-height: 220px;
-
     padding: 0 12px 16px;
   }
-
 
   .home-hero-visual img {
     height: 220px;
   }
 
-
   .home-section {
     margin-bottom: 34px;
   }
-
 
   .home-section-header {
     gap: 12px;
   }
 
-
   .home-section-header h2 {
     font-size: 1.35rem;
   }
 
-
   .home-category-card {
     min-height: 88px;
-
     padding: 14px;
   }
-
 
   .home-category-icon {
     width: 48px;
     height: 48px;
-
     margin-right: 13px;
   }
-
 
   .home-products-grid {
     grid-template-columns: 1fr;
   }
-
 
   .home-ai-cta {
     flex-direction: column;
