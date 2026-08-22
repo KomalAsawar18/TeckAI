@@ -51,7 +51,7 @@
   align-items: center;
   width: 100%;
   max-width: 420px;
-  min-height: 52px;
+  min-height: 48px;
   padding: 4px;
   background: white;
   border: 1px solid var(--color-border);
@@ -87,13 +87,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 var(--spacing-5);
+  gap: 6px;
+  height: 40px;
+  padding: 0 var(--spacing-4);
   border: 0;
   border-radius: var(--radius-md);
   background: var(--color-accent-highlight);
   color: #ffffff;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -107,14 +108,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-6);
+  padding: 0 var(--spacing-4);
   height: 100%;
   min-height: 0;
 }
 
 .home-hero-visual img {
-  max-width: 95%;
-  max-height: 85%;
+  max-width: 100%;
+  max-height: 90%;
   object-fit: contain;
 }
 
