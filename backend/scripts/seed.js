@@ -20,6 +20,16 @@ const categoriesData = [
     name: 'Keyboards',
     slug: 'keyboards',
     description: 'Mechanical and membrane keyboards for programmers and gaming enthusiasts.'
+  },
+  {
+    name: 'Monitors',
+    slug: 'monitors',
+    description: 'Ultra-wide, high refresh rate, and professional color-accurate monitors.'
+  },
+  {
+    name: 'Mouse',
+    slug: 'mouse',
+    description: 'Ergonomic, high-DPI precision, and lightweight wireless mice.'
   }
 ];
 

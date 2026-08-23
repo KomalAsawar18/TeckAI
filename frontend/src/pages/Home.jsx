@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Cpu, ArrowRight, Laptop, Headphones, Keyboard, Sparkles } from 'lucide-react';
+import { Cpu, ArrowRight, Laptop, Headphones, Keyboard, Sparkles, Monitor, Mouse } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/product/ProductCard';
@@ -75,6 +75,8 @@ const Home = () => {
       case 'laptops': return <Laptop size={24} />;
       case 'headphones': return <Headphones size={24} />;
       case 'keyboards': return <Keyboard size={24} />;
+      case 'monitors': return <Monitor size={24} />;
+      case 'mouse': return <Mouse size={24} />;
       default: return <Cpu size={24} />;
     }
   };
@@ -148,6 +150,7 @@ const Home = () => {
                   {cat.slug === 'keyboards' && 'Built for speed. Made to last.'}
                   {cat.slug === 'headphones' && 'Premium sound. Pure clarity.'}
                   {cat.slug === 'monitors' && 'Crystal clear displays.'}
+                  {cat.slug === 'mouse' && 'Precision control. Ergonomic design.'}
                 </p>
               </div>
               <ArrowRight size={16} className="home-category-arrow" />
