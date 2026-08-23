@@ -39,9 +39,13 @@ const productSchema = new mongoose.Schema({
   },
   stock: { 
     type: Number, 
-    required: true, 
-    default: 0, 
     min: 0 
+  },
+  availability: {
+    type: String,
+    enum: ['in_stock', 'out_of_stock', 'unknown'],
+    default: 'unknown',
+    index: true
   },
   images: [{ 
     type: String 

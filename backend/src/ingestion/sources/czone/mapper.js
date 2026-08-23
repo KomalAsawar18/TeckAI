@@ -62,12 +62,14 @@ function mapProduct(rawData) {
     }
   }
 
-  // Map stock availability
-  let stock = 0;
+  // Map availability status without fabricating stock quantity
+  let availability = 'unknown';
   if (rawData.availability) {
     const avail = String(rawData.availability).trim().toLowerCase();
     if (avail.includes('in stock') || avail.includes('available')) {
-      stock = 10; // Positive fallback
+      availability = 'in_stock';
+    } else if (avail.includes('out of stock') || avail.includes('sold out')) {
+      availability = 'out_of_stock';
     }
   }
 
@@ -81,7 +83,7 @@ function mapProduct(rawData) {
   }
 
   // Assemble generic product structure
-  return {
+  const resultProduct = {
     name: rawData.title ? String(rawData.title).trim() : '',
     price: price,
     brand: rawData.brandRaw ? String(rawData.brandRaw).trim() : 'Generic',
@@ -90,7 +92,7 @@ function mapProduct(rawData) {
     description: rawData.title ? `${String(rawData.title).trim()} available at Computer Zone Pakistan.` : '',
     images: rawData.imageUrl ? [String(rawData.imageUrl).trim()] : [],
     specifications: specifications,
-    stock: stock,
+    availability: availability,
     source: {
       name: 'Czone',
       listingId: String(rawData.productCode).trim(),
@@ -103,6 +105,16 @@ function mapProduct(rawData) {
       location: 'Karachi'
     }
   };
+
+  // Only pass stock if genuinely supplied as a number
+  if (rawData.stock !== undefined && rawData.stock !== null && rawData.stock !== '') {
+    const s = Number(rawData.stock);
+    if (!isNaN(s)) {
+      resultProduct.stock = s;
+    }
+  }
+
+  return resultProduct;
 }
 
 module.exports = {

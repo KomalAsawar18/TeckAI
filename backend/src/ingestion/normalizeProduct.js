@@ -127,6 +127,31 @@ function normalizeProduct(rawData) {
     }
   }
 
+  // 7. Stock and Availability normalization
+  let stock = undefined;
+  if (rawData.stock !== undefined && rawData.stock !== null && rawData.stock !== '') {
+    const s = Number(rawData.stock);
+    if (isNaN(s)) {
+      throw new Error('Product stock must be a valid number');
+    }
+    if (s < 0) {
+      throw new Error('Product stock cannot be negative');
+    }
+    stock = s;
+  }
+
+  let availability = 'unknown';
+  if (rawData.availability !== undefined && rawData.availability !== null && rawData.availability !== '') {
+    const rawAvail = String(rawData.availability).trim().toLowerCase().replace(/\s+/g, '_');
+    if (rawAvail === 'in_stock' || rawAvail === 'out_of_stock' || rawAvail === 'unknown') {
+      availability = rawAvail;
+    } else {
+      throw new Error(`Unsupported availability: ${rawData.availability}`);
+    }
+  } else if (stock !== undefined) {
+    availability = stock > 0 ? 'in_stock' : 'out_of_stock';
+  }
+
   // Build normalized output
   const normalized = {
     name,
@@ -135,7 +160,8 @@ function normalizeProduct(rawData) {
     currency,
     images,
     specifications,
-    tags
+    tags,
+    availability
   };
 
   // Pass through existing fields
@@ -143,7 +169,7 @@ function normalizeProduct(rawData) {
   if (description !== undefined) normalized.description = description;
   if (slug !== undefined) normalized.slug = slug;
   if (sku !== undefined) normalized.sku = sku;
-  if (rawData.stock !== undefined) normalized.stock = Number(rawData.stock);
+  if (stock !== undefined) normalized.stock = stock;
   if (rawData.category !== undefined) normalized.category = rawData.category;
   if (rawData.isFeatured !== undefined) normalized.isFeatured = Boolean(rawData.isFeatured);
   if (rawData.isActive !== undefined) normalized.isActive = Boolean(rawData.isActive);

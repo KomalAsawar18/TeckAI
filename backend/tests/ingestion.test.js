@@ -5,6 +5,7 @@ const Product = require('../src/models/Product');
 const { normalizeProduct } = require('../src/ingestion/normalizeProduct');
 const { upsertProduct } = require('../src/ingestion/upsertProduct');
 const { ingestProducts } = require('../src/ingestion/ingestProducts');
+const { mapProduct } = require('../src/ingestion/sources/czone/mapper');
 
 require('dotenv').config();
 let mongoServer;
@@ -604,6 +605,113 @@ describe('Product Ingestion - Step 1 Tests', () => {
       expect(updateSummary.created).toBe(0);
       expect(updateSummary.updated).toBe(1);
       expect(updateSummary.failed).toBe(0);
+    });
+  });
+
+  // 4. Ingestion Production Corrections: Stock vs Availability Tests
+  describe('Stock vs Availability Status checks', () => {
+
+    test('normalizeProduct() accepts availability and sets stock only when genuinely supplied', () => {
+      // Case 1: Only availability is supplied
+      const n1 = normalizeProduct({
+        name: 'Keyboard A',
+        price: 5000,
+        availability: 'in_stock'
+      });
+      expect(n1.availability).toBe('in_stock');
+      expect(n1.stock).toBeUndefined(); // no fabricated stock
+
+      // Case 2: Out of stock status
+      const n2 = normalizeProduct({
+        name: 'Keyboard B',
+        price: 5000,
+        availability: 'out_of_stock'
+      });
+      expect(n2.availability).toBe('out_of_stock');
+      expect(n2.stock).toBeUndefined();
+
+      // Case 3: Stock count is supplied but no availability is specified
+      const n3 = normalizeProduct({
+        name: 'Keyboard C',
+        price: 5000,
+        stock: 15
+      });
+      expect(n3.stock).toBe(15);
+      expect(n3.availability).toBe('in_stock');
+
+      // Case 4: Stock count is 0
+      const n4 = normalizeProduct({
+        name: 'Keyboard D',
+        price: 5000,
+        stock: 0
+      });
+      expect(n4.stock).toBe(0);
+      expect(n4.availability).toBe('out_of_stock');
+
+      // Case 5: Both stock and availability are supplied
+      const n5 = normalizeProduct({
+        name: 'Keyboard E',
+        price: 5000,
+        stock: 8,
+        availability: 'out_of_stock' // should preserve the exact status supplied
+      });
+      expect(n5.stock).toBe(8);
+      expect(n5.availability).toBe('out_of_stock');
+    });
+
+    test('normalizeProduct() throws on invalid availability option', () => {
+      expect(() => {
+        normalizeProduct({
+          name: 'Keyboard Invalid',
+          price: 5000,
+          availability: 'on_demand'
+        });
+      }).toThrow('Unsupported availability: on_demand');
+    });
+
+    test('Czone mapper maps availability without fabricating stock', () => {
+      const rawScraped = {
+        productCode: '14210',
+        title: 'Mechanical Gaming Keyboard',
+        priceText: 'Rs. 9,450',
+        categoryRaw: 'Gaming Keyboards',
+        availability: 'In Stock'
+      };
+
+      const mapped = mapProduct(rawScraped);
+
+      // Verify availability is mapped properly
+      expect(mapped.availability).toBe('in_stock');
+      // Verify stock is not fabricated
+      expect(mapped.stock).toBeUndefined();
+
+      const rawOutOfStock = {
+        productCode: '14210',
+        title: 'Mechanical Gaming Keyboard',
+        priceText: 'Rs. 9,450',
+        categoryRaw: 'Gaming Keyboards',
+        availability: 'Out Of Stock'
+      };
+
+      const mapped2 = mapProduct(rawOutOfStock);
+      expect(mapped2.availability).toBe('out_of_stock');
+      expect(mapped2.stock).toBeUndefined();
+    });
+
+    test('Czone mapper preserves exact stock quantity when genuinely supplied', () => {
+      const rawScraped = {
+        productCode: '14210',
+        title: 'Mechanical Gaming Keyboard',
+        priceText: 'Rs. 9,450',
+        categoryRaw: 'Gaming Keyboards',
+        availability: 'In Stock',
+        stock: 42 // genuinely supplied stock
+      };
+
+      const mapped = mapProduct(rawScraped);
+
+      expect(mapped.availability).toBe('in_stock');
+      expect(mapped.stock).toBe(42); // preserved
     });
   });
 });
