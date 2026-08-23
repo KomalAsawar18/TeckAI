@@ -3,6 +3,8 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const Category = require('../src/models/Category');
 const Product = require('../src/models/Product');
 const { normalizeProduct } = require('../src/ingestion/normalizeProduct');
+const { upsertProduct } = require('../src/ingestion/upsertProduct');
+const { ingestProducts } = require('../src/ingestion/ingestProducts');
 
 require('dotenv').config();
 let mongoServer;
@@ -64,6 +66,30 @@ beforeEach(async () => {
     name: 'Laptops',
     slug: 'laptops',
     description: 'Workstations'
+  });
+
+  await Category.create({
+    name: 'Headphones',
+    slug: 'headphones',
+    description: 'Audio'
+  });
+
+  await Category.create({
+    name: 'Keyboards',
+    slug: 'keyboards',
+    description: 'Input devices'
+  });
+
+  await Category.create({
+    name: 'Monitors',
+    slug: 'monitors',
+    description: 'Displays'
+  });
+
+  await Category.create({
+    name: 'Mouse',
+    slug: 'mouse',
+    description: 'Pointing devices'
   });
 });
 
@@ -336,8 +362,248 @@ describe('Product Ingestion - Step 1 Tests', () => {
         }
       });
 
-      expect(p1._id).toBeDefined();
-      expect(p2._id).toBeDefined();
+    });
+  });
+
+  // 3. Step 2B: upsertProduct and ingestProducts tests
+  describe('upsertProduct() & ingestProducts() persistence layer', () => {
+
+    test('first external listing creates a product and populates lastSyncedAt', async () => {
+      const normalized = {
+        name: 'HP EliteBook 840',
+        price: 150000,
+        brand: 'HP',
+        category: 'laptops',
+        condition: 'new',
+        description: 'Elite laptop',
+        source: {
+          name: 'Daraz',
+          listingId: '111',
+          type: 'scraper'
+        }
+      };
+
+      const result = await upsertProduct(normalized);
+      expect(result.operation).toBe('created');
+      expect(result.product._id).toBeDefined();
+      expect(result.product.name).toBe('HP EliteBook 840');
+      expect(result.product.slug).toBe('hp-elitebook-840');
+      expect(result.product.sku).toBeDefined();
+      expect(result.product.source.lastSyncedAt).toBeInstanceOf(Date);
+    });
+
+    test('same source.name + listingId updates instead of duplicating, preserves other fields, and refreshes lastSyncedAt', async () => {
+      const firstNormalized = {
+        name: 'Keyboard K552',
+        price: 9000,
+        brand: 'Redragon',
+        category: 'keyboards',
+        condition: 'new',
+        description: 'Mechanical keyboard',
+        source: {
+          name: 'OLX',
+          listingId: '222',
+          type: 'scraper'
+        },
+        stock: 5
+      };
+
+      const r1 = await upsertProduct(firstNormalized);
+      const initialId = r1.product._id;
+      const initialSyncedAt = r1.product.source.lastSyncedAt;
+
+      // Wait 10ms to ensure timestamp difference
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      const secondNormalized = {
+        name: 'Keyboard K552 V2',
+        price: 9500, // updated price
+        category: 'keyboards',
+        source: {
+          name: 'OLX',
+          listingId: '222'
+        }
+        // stock, brand, condition, description are missing (undefined) here
+      };
+
+      const r2 = await upsertProduct(secondNormalized);
+      expect(r2.operation).toBe('updated');
+      expect(r2.product._id.toString()).toBe(initialId.toString());
+      expect(r2.product.name).toBe('Keyboard K552 V2');
+      expect(r2.product.price).toBe(9500);
+      
+      // Verify undefined fields on updates do not erase existing values
+      expect(r2.product.brand).toBe('Redragon');
+      expect(r2.product.stock).toBe(5);
+      
+      // Verify lastSyncedAt is refreshed
+      expect(r2.product.source.lastSyncedAt.getTime()).toBeGreaterThan(initialSyncedAt.getTime());
+    });
+
+    test('same listingId from two different sources creates two separate products', async () => {
+      const p1 = await upsertProduct({
+        name: 'Product A',
+        price: 100,
+        brand: 'BrandX',
+        description: 'Description X',
+        category: 'headphones',
+        source: { name: 'Daraz', listingId: 'ABC-777' }
+      });
+
+      const p2 = await upsertProduct({
+        name: 'Product B',
+        price: 120,
+        brand: 'BrandY',
+        description: 'Description Y',
+        category: 'headphones',
+        source: { name: 'OLX', listingId: 'ABC-777' }
+      });
+
+      expect(p1.operation).toBe('created');
+      expect(p2.operation).toBe('created');
+      expect(p1.product._id.toString()).not.toBe(p2.product._id.toString());
+    });
+
+    test('external upsert without source identity is rejected', async () => {
+      await expect(
+        upsertProduct({
+          name: 'No Source Product',
+          price: 50,
+          brand: 'Brand',
+          description: 'Desc',
+          category: 'mouse'
+        })
+      ).rejects.toThrow('source.name and source.listingId are required');
+
+      await expect(
+        upsertProduct({
+          name: 'No ListingId Product',
+          price: 50,
+          brand: 'Brand',
+          description: 'Desc',
+          category: 'mouse',
+          source: { name: 'Daraz' }
+        })
+      ).rejects.toThrow('source.name and source.listingId are required');
+    });
+
+    test('valid 0 values are preserved and not ignored as missing', async () => {
+      const initial = await upsertProduct({
+        name: 'Device Zero',
+        price: 100,
+        brand: 'Brand',
+        description: 'Description',
+        category: 'mouse',
+        stock: 10,
+        source: { name: 'Daraz', listingId: 'ZERO-1' }
+      });
+
+      expect(initial.product.stock).toBe(10);
+
+      const update = await upsertProduct({
+        name: 'Device Zero',
+        price: 100,
+        brand: 'Brand',
+        description: 'Description',
+        category: 'mouse',
+        stock: 0, // intentional zero
+        source: { name: 'Daraz', listingId: 'ZERO-1' }
+      });
+
+      expect(update.product.stock).toBe(0);
+    });
+
+    test('valid category resolves correctly by name or slug, and unknown category is rejected', async () => {
+      // 1. Resolve by slug
+      const p1 = await upsertProduct({
+        name: 'Laptop X',
+        price: 200,
+        brand: 'Brand',
+        description: 'Description',
+        category: 'laptops',
+        source: { name: 'Daraz', listingId: 'CAT-1' }
+      });
+      expect(p1.product.category.toString()).toBe(testCategory._id.toString());
+
+      // 2. Resolve by case-insensitive name
+      const p2 = await upsertProduct({
+        name: 'Laptop Y',
+        price: 200,
+        brand: 'Brand',
+        description: 'Description',
+        category: '  Laptops  ',
+        source: { name: 'Daraz', listingId: 'CAT-2' }
+      });
+      expect(p2.product.category.toString()).toBe(testCategory._id.toString());
+
+      // 3. Reject unknown category
+      await expect(
+        upsertProduct({
+          name: 'Bad Category Product',
+          price: 200,
+          brand: 'Brand',
+          description: 'Description',
+          category: 'unknown-category-xyz',
+          source: { name: 'Daraz', listingId: 'CAT-3' }
+        })
+      ).rejects.toThrow('Category cannot be resolved');
+    });
+
+    test('ingestProducts batch helper continues after one invalid record and reports summary correctly', async () => {
+      const rawBatch = [
+        {
+          name: 'Valid Product 1',
+          price: 1000,
+          brand: 'Brand1',
+          description: 'Description 1',
+          category: 'laptops',
+          source: { name: 'Daraz', listingId: 'BATCH-1' }
+        },
+        {
+          // Invalid product: missing price
+          name: 'Invalid Product 2',
+          brand: 'Brand2',
+          description: 'Description 2',
+          category: 'laptops',
+          source: { name: 'Daraz', listingId: 'BATCH-2' }
+        },
+        {
+          name: 'Valid Product 3',
+          price: 2000,
+          brand: 'Brand3',
+          description: 'Description 3',
+          category: 'laptops',
+          source: { name: 'Daraz', listingId: 'BATCH-3' }
+        }
+      ];
+
+      const summary = await ingestProducts(rawBatch);
+
+      expect(summary.total).toBe(3);
+      expect(summary.created).toBe(2);
+      expect(summary.updated).toBe(0);
+      expect(summary.failed).toBe(1);
+      expect(summary.errors.length).toBe(1);
+      expect(summary.errors[0].index).toBe(1);
+      expect(summary.errors[0].error).toContain('price is required');
+
+      // Test batch updates
+      const updateBatch = [
+        {
+          name: 'Valid Product 1 Updated',
+          price: 1200,
+          brand: 'Brand1',
+          description: 'Description 1',
+          category: 'laptops',
+          source: { name: 'Daraz', listingId: 'BATCH-1' }
+        }
+      ];
+
+      const updateSummary = await ingestProducts(updateBatch);
+      expect(updateSummary.total).toBe(1);
+      expect(updateSummary.created).toBe(0);
+      expect(updateSummary.updated).toBe(1);
+      expect(updateSummary.failed).toBe(0);
     });
   });
 });
