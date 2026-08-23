@@ -108,8 +108,21 @@ class CartController {
           });
         }
 
-        // 5. Verify database stock levels
-        if (product.stock < parsedQuantity) {
+        // 5. Verify database stock levels and availability status
+        const isOutOfStock = product.availability === 'out_of_stock';
+        const isUnknownUnavailable = product.availability === 'unknown' && product.stock === undefined;
+        
+        if (isOutOfStock || isUnknownUnavailable) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              message: `Product "${product.name}" is currently out of stock or unavailable.`
+            }
+          });
+        }
+
+        // If numeric stock is defined, it is authoritative
+        if (product.stock !== undefined && product.stock < parsedQuantity) {
           return res.status(400).json({
             success: false,
             error: {

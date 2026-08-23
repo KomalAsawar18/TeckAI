@@ -45,15 +45,31 @@ exports.createOrder = async (req, res) => {
         throw new Error(`Product "${prod.name}" is currently unavailable.`);
       }
 
-      // Atomically check stock and decrement in one step
-      const updatedProduct = await Product.findOneAndUpdate(
-        { _id: prod._id, stock: { $gte: item.quantity }, isActive: true },
-        { $inc: { stock: -item.quantity } },
-        { new: true, session }
-      );
+      // Atomically check stock and decrement if numeric stock is defined, otherwise verify availability status
+      let updatedProduct;
+      if (prod.stock !== undefined) {
+        updatedProduct = await Product.findOneAndUpdate(
+          { _id: prod._id, stock: { $gte: item.quantity }, isActive: true },
+          { $inc: { stock: -item.quantity } },
+          { new: true, session }
+        );
+      } else {
+        const isOutOfStock = prod.availability === 'out_of_stock';
+        const isUnknownUnavailable = prod.availability === 'unknown';
+        if (isOutOfStock || isUnknownUnavailable) {
+          updatedProduct = null;
+        } else {
+          updatedProduct = await Product.findOneAndUpdate(
+            { _id: prod._id, isActive: true, availability: 'in_stock' },
+            { $set: { 'source.lastSyncedAt': new Date() } },
+            { new: true, session }
+          );
+        }
+      }
 
       if (!updatedProduct) {
-        throw new Error(`Insufficient stock for product "${prod.name}". Available: ${prod.stock}, Requested: ${item.quantity}`);
+        const stockInfo = prod.stock !== undefined ? `Available: ${prod.stock}` : `Status: ${prod.availability}`;
+        throw new Error(`Insufficient stock or availability for product "${prod.name}". ${stockInfo}, Requested: ${item.quantity}`);
       }
 
       // Authoritative database price & snapshotted details
