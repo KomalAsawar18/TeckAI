@@ -8,7 +8,7 @@ import './ProductCard.css';
 const ProductCard = ({ product }) => {
   const { name, slug, brand, price, currency, stock, images, rating, isFeatured } = product;
   const { isInWishlist, toggleWishlist } = useWishlist();
-  const inStock = stock > 0;
+  const inStock = product.availability === 'in_stock' || (product.stock !== undefined && product.stock > 0);
   const mainImage = images && images.length > 0 ? images[0] : 'https://placehold.co/600x400/eceef2/8b8d99?text=TeckAI';
   
   const isFav = isInWishlist(product._id);
@@ -47,12 +47,12 @@ const ProductCard = ({ product }) => {
         <h3 className="product-title text-md font-bold mb-2">
           <Link to={`/products/${slug}`}>{name}</Link>
         </h3>
-
+ 
         <div className="product-card-footer mt-auto">
           <div className="product-price-stock">
             <span className="product-price text-lg font-bold">{formatPrice(price, currency)}</span>
             <div className={`stock-status ${inStock ? 'in-stock' : 'out-of-stock'} text-xs`}>
-              {inStock ? `${stock} in stock` : 'Out of stock'}
+              {inStock ? (product.stock !== undefined ? `${product.stock} in stock` : 'In stock') : 'Out of stock'}
             </div>
           </div>
           <Link to={`/products/${slug}`} className="btn btn-secondary btn-view">

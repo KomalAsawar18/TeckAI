@@ -29,387 +29,234 @@ const handleResponse = async (response) => {
   return data;
 };
 
+/**
+ * Centralized request helper
+ */
+const request = async (endpoint, options = {}) => {
+  const { method = 'GET', body, headers: customHeaders } = options;
+  const headers = getHeaders(body ? 'application/json' : null);
+  
+  if (customHeaders) {
+    Object.assign(headers, customHeaders);
+  }
+
+  const fetchOptions = { method, headers };
+  if (body) {
+    fetchOptions.body = JSON.stringify(body);
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, fetchOptions);
+    return await handleResponse(response);
+  } catch (error) {
+    console.error(`API Error (${method} ${endpoint}):`, error.message);
+    throw error;
+  }
+};
+
 export const api = {
   /**
    * Fetch active categories for filters
    */
-  async getCategories() {
-    try {
-      const response = await fetch(`${API_BASE}/categories`, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (getCategories):', error.message);
-      throw error;
-    }
+  getCategories() {
+    return request('/categories');
   },
 
   /**
    * Fetch paginated and filtered products list
    */
-  async getProducts(params = {}) {
-    try {
-      const query = new URLSearchParams();
-      
-      Object.keys(params).forEach(key => {
-        if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
-          query.append(key, params[key]);
-        }
-      });
-
-      const queryString = query.toString();
-      const url = `${API_BASE}/products${queryString ? `?${queryString}` : ''}`;
-      
-      const response = await fetch(url, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (getProducts):', error.message);
-      throw error;
-    }
+  getProducts(params = {}) {
+    const query = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+        query.append(key, params[key]);
+      }
+    });
+    const queryString = query.toString();
+    return request(`/products${queryString ? `?${queryString}` : ''}`);
   },
 
   /**
    * Fetch product detail by slug
    */
-  async getProductBySlug(slug) {
-    try {
-      const response = await fetch(`${API_BASE}/products/${slug}`, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error(`API Error (getProductBySlug: ${slug}):`, error.message);
-      throw error;
-    }
+  getProductBySlug(slug) {
+    return request(`/products/${slug}`);
   },
 
   /**
    * Send chat message to AI assistant
    */
-  async sendAiChat(message, history = []) {
-    try {
-      const response = await fetch(`${API_BASE}/ai/chat`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ message, history })
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (sendAiChat):', error.message);
-      throw error;
-    }
+  sendAiChat(message, history = []) {
+    return request('/ai/chat', {
+      method: 'POST',
+      body: { message, history }
+    });
   },
 
   /**
    * Authenticate credentials
    */
-  async login(email, password) {
-    try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ email, password })
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (login):', error.message);
-      throw error;
-    }
+  login(email, password) {
+    return request('/auth/login', {
+      method: 'POST',
+      body: { email, password }
+    });
   },
 
   /**
    * Register account
    */
-  async register(name, email, password) {
-    try {
-      const response = await fetch(`${API_BASE}/auth/register`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ name, email, password })
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (register):', error.message);
-      throw error;
-    }
+  register(name, email, password) {
+    return request('/auth/register', {
+      method: 'POST',
+      body: { name, email, password }
+    });
   },
 
   /**
    * Retrieve active session profile
    */
-  async getMe() {
-    try {
-      const response = await fetch(`${API_BASE}/auth/me`, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (getMe):', error.message);
-      throw error;
-    }
+  getMe() {
+    return request('/auth/me');
   },
 
   /**
    * Update active session profile
    */
-  async updateProfile(profileData) {
-    try {
-      const response = await fetch(`${API_BASE}/auth/me`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify(profileData)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (updateProfile):', error.message);
-      throw error;
-    }
+  updateProfile(profileData) {
+    return request('/auth/me', {
+      method: 'PUT',
+      body: profileData
+    });
   },
 
   /**
    * Fetch user's wishlist
    */
-  async getWishlist() {
-    try {
-      const response = await fetch(`${API_BASE}/wishlist`, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (getWishlist):', error.message);
-      throw error;
-    }
+  getWishlist() {
+    return request('/wishlist');
   },
 
   /**
    * Add a product reference to user's wishlist
    */
-  async addToWishlist(productId) {
-    try {
-      const response = await fetch(`${API_BASE}/wishlist`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ productId })
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error(`API Error (addToWishlist for ${productId}):`, error.message);
-      throw error;
-    }
+  addToWishlist(productId) {
+    return request('/wishlist', {
+      method: 'POST',
+      body: { productId }
+    });
   },
 
   /**
    * Remove a product reference from user's wishlist
    */
-  async removeFromWishlist(productId) {
-    try {
-      const response = await fetch(`${API_BASE}/wishlist/${productId}`, {
-        method: 'DELETE',
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error(`API Error (removeFromWishlist for ${productId}):`, error.message);
-      throw error;
-    }
+  removeFromWishlist(productId) {
+    return request(`/wishlist/${productId}`, {
+      method: 'DELETE'
+    });
   },
 
   /**
    * Place an order (Checkout)
    */
-  async createOrder(shippingAddress) {
-    try {
-      const response = await fetch(`${API_BASE}/orders`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ shippingAddress })
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (createOrder):', error.message);
-      throw error;
-    }
+  createOrder(shippingAddress) {
+    return request('/orders', {
+      method: 'POST',
+      body: { shippingAddress }
+    });
   },
 
   /**
    * Retrieve current user's order history
    */
-  async getUserOrders() {
-    try {
-      const response = await fetch(`${API_BASE}/orders`, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (getUserOrders):', error.message);
-      throw error;
-    }
+  getUserOrders() {
+    return request('/orders');
   },
 
   /**
    * Retrieve detailed info for a single order
    */
-  async getOrderById(orderId) {
-    try {
-      const response = await fetch(`${API_BASE}/orders/${orderId}`, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error(`API Error (getOrderById for ${orderId}):`, error.message);
-      throw error;
-    }
+  getOrderById(orderId) {
+    return request(`/orders/${orderId}`);
   },
 
   /**
    * Admin: Retrieve all platform orders
    */
-  async adminGetOrders() {
-    try {
-      const response = await fetch(`${API_BASE}/orders/admin/all`, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (adminGetOrders):', error.message);
-      throw error;
-    }
+  adminGetOrders() {
+    return request('/orders/admin/all');
   },
 
   /**
    * Admin: Update the status tag of a user's order
    */
-  async adminUpdateOrderStatus(orderId, status) {
-    try {
-      const response = await fetch(`${API_BASE}/orders/${orderId}/status`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({ status })
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error(`API Error (adminUpdateOrderStatus for ${orderId}):`, error.message);
-      throw error;
-    }
+  adminUpdateOrderStatus(orderId, status) {
+    return request(`/orders/${orderId}/status`, {
+      method: 'PUT',
+      body: { status }
+    });
   },
 
   /**
    * Admin: Add a new catalog product
    */
-  async adminCreateProduct(productData) {
-    try {
-      const response = await fetch(`${API_BASE}/products`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(productData)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (adminCreateProduct):', error.message);
-      throw error;
-    }
+  adminCreateProduct(productData) {
+    return request('/products', {
+      method: 'POST',
+      body: productData
+    });
   },
 
   /**
    * Admin: Edit details of a catalog product
    */
-  async adminUpdateProduct(productId, productData) {
-    try {
-      const response = await fetch(`${API_BASE}/products/${productId}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify(productData)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error(`API Error (adminUpdateProduct for ${productId}):`, error.message);
-      throw error;
-    }
+  adminUpdateProduct(productId, productData) {
+    return request(`/products/${productId}`, {
+      method: 'PUT',
+      body: productData
+    });
   },
 
   /**
    * Admin: Create a new filter category
    */
-  async adminCreateCategory(categoryData) {
-    try {
-      const response = await fetch(`${API_BASE}/categories`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(categoryData)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (adminCreateCategory):', error.message);
-      throw error;
-    }
+  adminCreateCategory(categoryData) {
+    return request('/categories', {
+      method: 'POST',
+      body: categoryData
+    });
   },
 
   /**
    * Admin: Retrieve all registered platform users
    */
-  async adminGetUsers() {
-    try {
-      const response = await fetch(`${API_BASE}/users`, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (adminGetUsers):', error.message);
-      throw error;
-    }
+  adminGetUsers() {
+    return request('/users');
   },
 
   /**
    * Admin: Retrieve all products (active and inactive)
    */
-  async adminGetProducts() {
-    try {
-      const response = await fetch(`${API_BASE}/products/admin/all`, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (adminGetProducts):', error.message);
-      throw error;
-    }
+  adminGetProducts() {
+    return request('/products/admin/all');
   },
-
-  // ─── Cart API ────────────────────────────────────────────────────────
 
   /**
    * Fetch the authenticated user's remote cart
    */
-  async getCart() {
-    try {
-      const response = await fetch(`${API_BASE}/cart`, {
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (getCart):', error.message);
-      throw error;
-    }
+  getCart() {
+    return request('/cart');
   },
 
   /**
    * Replace the entire cart with a new items array (used for sync & merge)
    * @param {Array<{product: string, quantity: number}>} items
    */
-  async updateCart(items) {
-    try {
-      const response = await fetch(`${API_BASE}/cart`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({ items })
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (updateCart):', error.message);
-      throw error;
-    }
+  updateCart(items) {
+    return request('/cart', {
+      method: 'PUT',
+      body: { items }
+    });
   },
 
   /**
@@ -417,34 +264,20 @@ export const api = {
    * @param {string} productId
    * @param {number} quantity
    */
-  async addItemToCart(productId, quantity = 1) {
-    try {
-      const response = await fetch(`${API_BASE}/cart`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ productId, quantity })
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (addItemToCart):', error.message);
-      throw error;
-    }
+  addItemToCart(productId, quantity = 1) {
+    return request('/cart', {
+      method: 'POST',
+      body: { productId, quantity }
+    });
   },
 
   /**
    * Remove a single item from the remote cart
    * @param {string} productId
    */
-  async removeCartItem(productId) {
-    try {
-      const response = await fetch(`${API_BASE}/cart/${productId}`, {
-        method: 'DELETE',
-        headers: getHeaders(null)
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('API Error (removeCartItem):', error.message);
-      throw error;
-    }
+  removeCartItem(productId) {
+    return request(`/cart/${productId}`, {
+      method: 'DELETE'
+    });
   }
 };

@@ -244,7 +244,7 @@ const AiAssistant = () => {
                     <div className="grounded-products-grid">
                       {msg.products.map((product, pIdx) => {
                         const specsSummary = formatSpecs(product);
-                        const isStockAvailable = product.stock > 0;
+                        const isStockAvailable = product.availability === 'in_stock' || (product.stock !== undefined && product.stock > 0);
                         return (
                           <div key={pIdx} className="grounded-product-card card p-3 flex flex-col justify-between">
                             <div className="flex gap-3">
@@ -260,7 +260,7 @@ const AiAssistant = () => {
                             
                             <div className="grounded-card-bottom flex justify-between align-center mt-3 pt-2 border-top">
                               <span className={`text-xxs font-semibold ${isStockAvailable ? 'text-success' : 'text-danger'}`}>
-                                {isStockAvailable ? `In Stock (${product.stock})` : 'Out of Stock'}
+                                {isStockAvailable ? (product.stock !== undefined ? `In Stock (${product.stock})` : 'In Stock') : 'Out of Stock'}
                               </span>
                               <RouterLink to={`/products/${product.slug}`} className="btn btn-primary btn-xxs">
                                 <span>Details</span>

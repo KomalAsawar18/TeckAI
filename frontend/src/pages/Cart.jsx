@@ -55,7 +55,7 @@ const Cart = () => {
             {cartItems.map((item) => {
               const product = item.product;
               const itemSubtotal = product.price * item.quantity;
-              const isMaxStock = item.quantity >= product.stock;
+              const isMaxStock = product.stock !== undefined ? item.quantity >= product.stock : item.quantity >= 99;
 
               return (
                 <div key={product._id} className="card cart-item-card flex gap-6">
@@ -76,7 +76,7 @@ const Cart = () => {
                         <h3 className="cart-item-name text-primary">
                           <Link to={`/products/${product.slug}`}>{product.name}</Link>
                         </h3>
-                        {product.stock <= 5 && (
+                        {product.stock !== undefined && product.stock <= 5 && (
                           <span className="cart-item-stock text-warning">
                             Only {product.stock} left in stock
                           </span>

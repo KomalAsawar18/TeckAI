@@ -60,7 +60,7 @@ const ProductDetails = () => {
   if (!product) return null;
 
   const { name, brand, price, originalPrice, currency, stock, images, description, rating, reviewCount, category, specifications } = product;
-  const inStock = stock > 0;
+  const inStock = product.availability === 'in_stock' || (product.stock !== undefined && product.stock > 0);
   const mainImage = images && images.length > 0 ? images[0] : 'https://placehold.co/600x400/eceef2/8b8d99?text=TeckAI';
 
   const specsList = specifications ? Object.entries(specifications) : [];
@@ -103,7 +103,7 @@ const ProductDetails = () => {
               )}
             </div>
             <div className={`detail-stock-badge mt-2 badge ${inStock ? 'badge-success' : 'badge-error'}`}>
-              {inStock ? `${stock} units available` : 'Temporarily Out of Stock'}
+              {inStock ? (product.stock !== undefined ? `${product.stock} units available` : 'In Stock') : 'Temporarily Out of Stock'}
             </div>
           </div>
 
@@ -128,8 +128,8 @@ const ProductDetails = () => {
                   </span>
                   <button 
                     className="qty-btn p-1 text-secondary hover-text-primary" 
-                    onClick={() => setQty(q => Math.min(stock, q + 1))} 
-                    disabled={qty >= stock}
+                    onClick={() => setQty(q => Math.min(stock !== undefined ? stock : 99, q + 1))} 
+                    disabled={qty >= (stock !== undefined ? stock : 99)}
                     type="button"
                   >
                     <Plus size={14} />

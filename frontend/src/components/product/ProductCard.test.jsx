@@ -1,8 +1,15 @@
 import React from 'react';
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ProductCard from './ProductCard';
+
+vi.mock('../../context/WishlistContext', () => ({
+  useWishlist: () => ({
+    isInWishlist: () => false,
+    toggleWishlist: () => {}
+  })
+}));
 
 const mockProduct = {
   name: 'ThinkPad X1 Carbon',
