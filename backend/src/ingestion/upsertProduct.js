@@ -115,7 +115,7 @@ async function upsertProduct(normalizedProduct) {
     // Update existing document fields
     const fieldsToSync = [
       'name', 'brand', 'description', 'price', 'currency', 'condition', 
-      'images', 'specifications', 'rating', 'reviewCount', 'stock', 
+      'images', 'specifications', 'rating', 'reviewCount', 'stock', 'availability', 
       'category', 'source', 'seller', 'isActive', 'isFeatured', 'tags'
     ];
 

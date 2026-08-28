@@ -2,35 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { Search, RotateCcw } from 'lucide-react';
 import './Filters.css';
 
-const BRANDS = [
+const DEFAULT_BRANDS = [
   { label: 'All Brands', value: '' },
-  { label: 'Lenovo', value: 'Lenovo' },
-  { label: 'Apple', value: 'Apple' },
-  { label: 'HP', value: 'HP' },
-  { label: 'Dell', value: 'Dell' },
+  { label: 'Ajazz', value: 'Ajazz' },
   { label: 'ASUS', value: 'ASUS' },
-  { label: 'Acer', value: 'Acer' },
-  { label: 'Sony', value: 'Sony' },
-  { label: 'Bose', value: 'Bose' },
-  { label: 'Sennheiser', value: 'Sennheiser' },
-  { label: 'Audio-Technica', value: 'Audio-Technica' },
-  { label: 'Keychron', value: 'Keychron' },
   { label: 'Logitech', value: 'Logitech' },
-  { label: 'SteelSeries', value: 'SteelSeries' }
+  { label: 'Keychron', value: 'Keychron' },
+  { label: 'SteelSeries', value: 'SteelSeries' },
+  { label: 'Razer', value: 'Razer' },
+  { label: 'Dell', value: 'Dell' },
+  { label: 'Lenovo', value: 'Lenovo' },
+  { label: 'HP', value: 'HP' }
 ];
 
 const SORT_OPTIONS = [
-  { label: 'Popular & Featured', value: '' },
+  { label: 'Newest Arrivals', value: 'newest' },
   { label: 'Price: Low to High', value: 'price_asc' },
   { label: 'Price: High to Low', value: 'price_desc' },
-  { label: 'Newest Arrivals', value: 'newest' }
+  { label: 'Name: A to Z', value: 'name_asc' }
 ];
 
-const Filters = ({ categories = [], filters = {}, onFilterChange, onClear }) => {
+const Filters = ({ categories = [], brands = [], filters = {}, onFilterChange, onClear }) => {
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const [minPriceInput, setMinPriceInput] = useState(filters.minPrice || '');
   const [maxPriceInput, setMaxPriceInput] = useState(filters.maxPrice || '');
   const [priceError, setPriceError] = useState('');
+
+  const brandOptions = brands && brands.length > 0
+    ? [{ label: 'All Brands', value: '' }, ...brands.map(b => (typeof b === 'string' ? { label: b, value: b } : b))]
+    : DEFAULT_BRANDS;
 
   // Synchronize state with URL parameters when filters prop updates
   useEffect(() => {
@@ -121,7 +121,7 @@ const Filters = ({ categories = [], filters = {}, onFilterChange, onClear }) => 
           value={filters.brand || ''}
           onChange={(e) => onFilterChange({ brand: e.target.value })}
         >
-          {BRANDS.map((b) => (
+          {brandOptions.map((b) => (
             <option key={b.value} value={b.value}>
               {b.label}
             </option>

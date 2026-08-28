@@ -24,7 +24,9 @@ const handleResponse = async (response) => {
   const data = await response.json();
   if (!response.ok) {
     const errorMsg = data.error?.message || 'Something went wrong';
-    throw new Error(errorMsg);
+    const err = new Error(errorMsg);
+    err.payload = data.error;
+    throw err;
   }
   return data;
 };
@@ -63,7 +65,7 @@ export const api = {
   },
 
   /**
-   * Fetch paginated and filtered products list
+   * Fetch paginated and filtered products list (Legacy)
    */
   getProducts(params = {}) {
     const query = new URLSearchParams();
@@ -77,7 +79,49 @@ export const api = {
   },
 
   /**
-   * Fetch product detail by slug
+   * Fetch paginated and filtered canonical catalog products
+   */
+  getCanonicalProducts(params = {}) {
+    const query = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+        query.append(key, params[key]);
+      }
+    });
+    const queryString = query.toString();
+    return request(`/canonical-products${queryString ? `?${queryString}` : ''}`);
+  },
+
+  /**
+   * Fetch single canonical product summary by ID
+   */
+  getCanonicalProduct(id, params = {}) {
+    const query = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+        query.append(key, params[key]);
+      }
+    });
+    const queryString = query.toString();
+    return request(`/canonical-products/${id}${queryString ? `?${queryString}` : ''}`);
+  },
+
+  /**
+   * Fetch detailed ranked offers comparison for a canonical product
+   */
+  getCanonicalProductOffers(id, params = {}) {
+    const query = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+        query.append(key, params[key]);
+      }
+    });
+    const queryString = query.toString();
+    return request(`/canonical-products/${id}/offers${queryString ? `?${queryString}` : ''}`);
+  },
+
+  /**
+   * Fetch product detail by slug (Legacy)
    */
   getProductBySlug(slug) {
     return request(`/products/${slug}`);
@@ -86,11 +130,30 @@ export const api = {
   /**
    * Send chat message to AI assistant
    */
-  sendAiChat(message, history = []) {
+  sendAiChat(message, options = {}) {
     return request('/ai/chat', {
       method: 'POST',
-      body: { message, history }
+      body: { 
+        message, 
+        conversationId: options.conversationId,
+        canonicalProductId: options.canonicalProductId,
+        actionIntent: options.actionIntent
+      }
     });
+  },
+
+  /**
+   * Get authenticated user's recent AI conversations
+   */
+  getAiConversations() {
+    return request('/ai/conversations');
+  },
+
+  /**
+   * Get a specific AI conversation by ID
+   */
+  getAiConversationById(id) {
+    return request(`/ai/conversations/${id}`);
   },
 
   /**

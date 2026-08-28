@@ -1,34 +1,97 @@
-/**
- * Czone Source Connector Client
- * 
- * Responsible only for retrieving raw source data.
- * No database or persistence logic should be placed here.
- * Network/Scraping libraries are not implemented yet in this step.
- */
+const { URL } = require('url');
 
 /**
- * Fetches raw HTML of a product page by URL.
+ * Validates whether the supplied URL is a valid HTTP/HTTPS URL and belongs to Czone Pakistan domain.
  * 
- * @param {string} url - Product detail page URL
- * @returns {Promise<Object>} Raw scraped payload structure (mocked)
+ * @param {string} urlStr - The URL to validate
+ * @returns {boolean} True if valid Czone URL, false otherwise
  */
-async function fetchProductData(url) {
-  // TODO: Implement browser automation or HTTP request header rotation to bypass Cloudflare
-  throw new Error('Network fetching is not implemented yet in this step');
+function validateCzoneUrl(urlStr) {
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+    const host = parsed.hostname.toLowerCase();
+    return host === 'czone.com.pk' || host === 'www.czone.com.pk' || host.endsWith('.czone.com.pk');
+  } catch (err) {
+    return false;
+  }
 }
 
 /**
- * Fetches raw list of product URLs/Codes from a category listing page.
+ * Fetches the HTML content of a single Czone product page without anti-bot circumvention.
  * 
- * @param {string} categoryUrl - Category listing page URL
- * @returns {Promise<Array<string>>} List of product URLs
+ * @param {string} url - The product page URL
+ * @returns {Promise<Object>} The result object conforming to the result contract
  */
-async function fetchCategoryListings(categoryUrl) {
-  // TODO: Implement category crawl logic
-  throw new Error('Network fetching is not implemented yet in this step');
+async function fetchProductPage(url) {
+  if (!validateCzoneUrl(url)) {
+    return {
+      success: false,
+      reason: 'invalid_url'
+    };
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, 10000); // 10-second timeout
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5'
+      }
+    });
+
+    clearTimeout(timeoutId);
+
+    // Check for unexpected non-HTML content type
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
+      return {
+        success: false,
+        reason: 'unexpected_content',
+        status: response.status
+      };
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        reason: 'source_unavailable',
+        status: response.status
+      };
+    }
+
+    const html = await response.text();
+    return {
+      success: true,
+      rawStatus: response.status,
+      html
+    };
+
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error.name === 'AbortError') {
+      return {
+        success: false,
+        reason: 'timeout'
+      };
+    }
+
+    return {
+      success: false,
+      reason: 'network_error'
+    };
+  }
 }
 
 module.exports = {
-  fetchProductData,
-  fetchCategoryListings
+  fetchProductPage,
+  validateCzoneUrl
 };

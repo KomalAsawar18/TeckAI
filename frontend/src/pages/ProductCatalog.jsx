@@ -13,7 +13,7 @@ const ProductCatalog = () => {
   
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 12, totalItems: 0, totalPages: 1 });
+  const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, totalPages: 1 });
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,7 +34,7 @@ const ProductCatalog = () => {
     const fetchCategories = async () => {
       try {
         const res = await api.getCategories();
-        setCategories(res.data);
+        setCategories(res.data || res.categories || []);
       } catch (err) {
         console.error('Failed to load categories:', err.message);
       }
@@ -42,11 +42,11 @@ const ProductCatalog = () => {
     fetchCategories();
   }, []);
 
-  // Fetch products whenever searchParams change
+  // Fetch canonical products whenever searchParams change
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await api.getProducts({
+      const res = await api.getCanonicalProducts({
         category: currentFilters.category,
         search: currentFilters.search,
         minPrice: currentFilters.minPrice,
@@ -54,10 +54,10 @@ const ProductCatalog = () => {
         brand: currentFilters.brand,
         sort: currentFilters.sort,
         page: currentFilters.page,
-        limit: 9 // Limit to 9 items per page for catalog aesthetics
+        limit: 12
       });
-      setProducts(res.data);
-      setPagination(res.pagination);
+      setProducts(res.products || res.data || []);
+      setPagination(res.pagination || { page: 1, limit: 12, total: (res.products || []).length, totalPages: 1 });
       setError(null);
     } catch (err) {
       setError(err.message || 'Failed to fetch catalog products');
@@ -105,7 +105,7 @@ const ProductCatalog = () => {
       <div className="catalog-header mb-6">
         <h1 className="text-2xl font-bold">Technology Catalog</h1>
         <p className="text-sm text-secondary">
-          Browse our high-quality computer peripherals and developer gear.
+          Compare real-time prices across trusted Pakistan tech retailers and secure the best deal.
         </p>
       </div>
 

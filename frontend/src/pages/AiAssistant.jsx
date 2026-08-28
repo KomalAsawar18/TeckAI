@@ -1,10 +1,62 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Send, Sparkles, AlertCircle, ShoppingBag, ArrowRight, Table, Info, RefreshCw, MessageSquare, ArrowDownRight } from 'lucide-react';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
+import { Send, Sparkles, AlertCircle, ShoppingBag, ArrowRight, Table, Info, RefreshCw, MessageSquare, ArrowDownRight, Clock, Plus, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 import './AiAssistant.css';
 
+class AiErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('AiAssistant Error Boundary Caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="card p-6 flex flex-col align-center text-center justify-center my-8">
+          <AlertCircle className="text-danger mb-4" size={32} />
+          <h3 className="text-lg font-bold mb-2">Something went wrong loading this conversation.</h3>
+          <p className="text-muted text-sm mb-6">A runtime error occurred displaying the chat.</p>
+          <div className="flex gap-3 justify-center">
+            <button 
+              className="btn btn-secondary"
+              onClick={() => {
+                this.setState({ hasError: false });
+                this.props.onRetry && this.props.onRetry();
+              }}
+            >
+              Retry
+            </button>
+            <button 
+              className="btn btn-primary"
+              onClick={() => {
+                this.setState({ hasError: false });
+                this.props.onNewChat && this.props.onNewChat();
+              }}
+            >
+              Start New Chat
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const AiAssistant = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialConversationId = new URLSearchParams(location.search).get('c') || null;
+
   const [messages, setMessages] = useState([
     {
       sender: 'ai',
@@ -18,30 +70,148 @@ const AiAssistant = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
+  const [conversations, setConversations] = useState([]);
+  const [activeConversationId, setActiveConversationId] = useState(initialConversationId);
+  const [showHistory, setShowHistory] = useState(false);
+  const [isRestoringConversation, setIsRestoringConversation] = useState(!!initialConversationId);
+
   const containerRef = useRef(null);
   const chatEndRef = useRef(null);
-  const location = useLocation();
+  const hasInitializedRef = useRef(false);
+
+  // Normalization layer to guarantee shape
+  const normalizeProduct = (product) => {
+    if (!product || typeof product !== 'object') return null;
+    
+    // Parse price safely to number
+    let parsedPrice = null;
+    if (typeof product.price === 'number') {
+      parsedPrice = product.price;
+    } else if (typeof product.price === 'string') {
+      const num = parseFloat(product.price.replace(/[^\d.-]/g, ''));
+      if (!isNaN(num)) parsedPrice = num;
+    }
+
+    return {
+      canonicalProductId: product.canonicalProductId || product.id || product._id || null,
+      name: typeof product.name === 'string' ? product.name : 'Unknown Product',
+      brand: typeof product.brand === 'string' ? product.brand : '',
+      model: typeof product.model === 'string' ? product.model : '',
+      price: parsedPrice,
+      currency: typeof product.currency === 'string' ? product.currency : 'PKR',
+      seller: typeof product.seller === 'string' ? product.seller : '',
+      availability: typeof product.availability === 'string' ? product.availability.toLowerCase() : 'unknown',
+      offerCount: typeof product.offerCount === 'number' ? product.offerCount : 1,
+      image: typeof product.image === 'string' ? product.image : (Array.isArray(product.images) && typeof product.images[0] === 'string' ? product.images[0] : null),
+      specifications: product.specifications && typeof product.specifications === 'object' ? product.specifications : {}
+    };
+  };
+
+  const normalizeMessage = (msg) => {
+    if (!msg || typeof msg !== 'object') return null;
+    const normalizedProducts = Array.isArray(msg.products) 
+      ? msg.products.map(normalizeProduct).filter(Boolean) 
+      : [];
+      
+    return {
+      sender: msg.role === 'user' || msg.sender === 'user' ? 'user' : 'ai',
+      text: typeof msg.content === 'string' ? msg.content : (typeof msg.text === 'string' ? msg.text : ''),
+      type: normalizedProducts.length > 0 ? 'catalog_grounded' : 'general_guidance',
+      products: normalizedProducts,
+      sections: Array.isArray(msg.sections) ? msg.sections : [],
+      comparisonTable: msg.comparisonTable || null,
+      isError: msg.isError || false
+    };
+  };
+
+  // Fetch recent conversations on mount
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const res = await api.getAiConversations();
+        if (res.success && Array.isArray(res.data)) {
+          setConversations(res.data);
+        }
+      } catch (err) {
+        // Ignore if guest
+      }
+    };
+    fetchConversations();
+  }, []);
+
+  const isNavigatingToHistory = useRef(initialConversationId ? true : false);
+  const activeRequestRef = useRef(null);
+
+  // Load specific conversation if ID present
+  useEffect(() => {
+    const loadConversation = async () => {
+      if (!activeConversationId) return;
+      if (!isNavigatingToHistory.current && hasInitializedRef.current) return;
+      
+      if (activeRequestRef.current) {
+        activeRequestRef.current.abort();
+      }
+      const abortController = new AbortController();
+      activeRequestRef.current = abortController;
+
+      try {
+        setIsRestoringConversation(true);
+        const res = await api.getAiConversationById(activeConversationId, { signal: abortController.signal });
+        
+        // Ensure this response is still for the current active ID
+        if (abortController.signal.aborted) return;
+        
+        if (res.success && Array.isArray(res.data?.messages) && res.data.messages.length > 0) {
+          const loadedMessages = res.data.messages.map(normalizeMessage).filter(Boolean);
+          setMessages(loadedMessages);
+          isNavigatingToHistory.current = false;
+        } else {
+          // Empty or invalid messages format
+          throw new Error('Invalid conversation format');
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return; // Ignore aborts
+        
+        // Show fallback for 404 / malformed
+        setMessages([normalizeMessage({
+          sender: 'ai',
+          content: '❌ Conversation unavailable or no longer exists. Please start a new chat.',
+          isError: true
+        })]);
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsRestoringConversation(false);
+        }
+      }
+    };
+    
+    if (activeConversationId) {
+      loadConversation();
+    } else {
+      setIsRestoringConversation(false);
+    }
+  }, [activeConversationId, navigate]);
 
   // Handle auto-queries from the homepage
   useEffect(() => {
-    if (location.state?.initialMessage) {
+    if (location.state?.initialMessage && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
       handleSend(location.state.initialMessage);
-      // Clear location state history so refreshes don't re-trigger the query
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
-  // Smart scroll: scroll to bottom only if user is already near bottom
   const scrollToBottom = (force = false) => {
     const container = containerRef.current;
     if (!container) return;
 
     const isNearBottom = container.scrollHeight - container.clientHeight - container.scrollTop < 250;
     if (isNearBottom || force) {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: 'smooth'
-      });
+      if (typeof container.scrollTo === 'function') {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      } else {
+        container.scrollTop = container.scrollHeight;
+      }
     }
   };
 
@@ -49,28 +219,80 @@ const AiAssistant = () => {
     scrollToBottom();
   }, [messages, loading]);
 
-  const handleSend = async (textToSend) => {
+  // Handle browser Back/Forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      isNavigatingToHistory.current = true;
+      const urlParams = new URLSearchParams(window.location.search);
+      const cId = urlParams.get('c');
+      setActiveConversationId(cId || null);
+      if (!cId) {
+        setMessages([{
+          sender: 'ai',
+          text: "Tell me what you need and I'll help you find the best match from our catalog.",
+          type: 'general_guidance',
+          products: []
+        }]);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleNewChat = () => {
+    setActiveConversationId(null);
+    setMessages([{
+      sender: 'ai',
+      text: "Tell me what you need and I'll help you find the best match from our catalog.",
+      type: 'general_guidance',
+      products: []
+    }]);
+    navigate('/ai-assistant');
+    setShowHistory(false);
+  };
+
+  const loadPastChat = (id) => {
+    isNavigatingToHistory.current = true;
+    setActiveConversationId(id);
+    navigate(`/ai-assistant?c=${id}`);
+    setShowHistory(false);
+    hasInitializedRef.current = false; // allow reload hook to trigger
+  };
+  const handleSend = async (textToSend, options = {}) => {
     const query = textToSend || inputText;
     if (!query.trim() || loading) return;
 
-    // Add user message to feed
-    const userMessage = { sender: 'user', text: query.trim() };
-    setMessages(prev => [...prev, userMessage]);
+    // Check if this exact text is already the last user message (retry scenario)
+    const isRetry = messages.length > 0 && 
+                    messages[messages.length - 1].sender === 'user' && 
+                    messages[messages.length - 1].text === query.trim();
+
+    if (!isRetry) {
+      // Add user message to feed
+      const userMessage = { sender: 'user', text: query.trim() };
+      setMessages(prev => [...prev, userMessage]);
+    }
     
     setInputText('');
     setLoading(true);
     setError(null);
 
-    // Format chat history for backend (converting sender user/ai to role user/model)
-    const chatHistory = messages.map(msg => ({
-      role: msg.sender === 'user' ? 'user' : 'model',
-      content: msg.text
-    }));
+    // Remove any previous error message from AI before retrying
+    setMessages(prev => prev.filter(msg => !(msg.sender === 'ai' && msg.isError)));
 
     try {
-      const res = await api.sendAiChat(query.trim(), chatHistory);
+      const res = await api.sendAiChat(query.trim(), {
+        conversationId: activeConversationId,
+        canonicalProductId: options.canonicalProductId,
+        actionIntent: options.actionIntent
+      });
       
       if (res.success) {
+        if (res.data.conversationId && !activeConversationId) {
+          setActiveConversationId(res.data.conversationId);
+          window.history.replaceState(null, '', `?c=${res.data.conversationId}`);
+        }
+        
         const aiMessage = {
           sender: 'ai',
           text: res.data.response,
@@ -85,12 +307,19 @@ const AiAssistant = () => {
       }
     } catch (err) {
       console.error(err);
+      const returnedCid = err.payload?.conversationId;
+      if (returnedCid && !activeConversationId) {
+        setActiveConversationId(returnedCid);
+        window.history.replaceState(null, '', `?c=${returnedCid}`);
+      }
+      
       setError(err.message || 'Something went wrong. Please check your connection.');
       setMessages(prev => [...prev, {
         sender: 'ai',
         text: '❌ Error: I ran into an issue communicating with the AI server. Please try again in a few moments.',
         type: 'general_guidance',
-        products: []
+        products: [],
+        isError: true
       }]);
     } finally {
       setLoading(false);
@@ -102,7 +331,9 @@ const AiAssistant = () => {
   const onKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      if (!loading) {
+        handleSend();
+      }
     }
   };
 
@@ -145,22 +376,71 @@ const AiAssistant = () => {
   ];
 
   return (
+    <AiErrorBoundary onNewChat={handleNewChat} onRetry={() => window.location.reload()}>
     <div className="ai-assistant-page container py-8 fade-in">
       <div className="assistant-header text-center mb-6">
         <div className="ai-glow-badge inline-flex align-center gap-2 mb-3">
           <Sparkles size={13} />
           <span>Intelligent Shopping Assistant</span>
         </div>
-        <h1 className="text-3xl font-bold mb-2">Ask TeckAI</h1>
-        <p className="text-secondary text-sm max-w-xl mx-auto">
+        <h1 className="text-3xl font-bold mb-4">Ask TeckAI</h1>
+        <p className="text-secondary text-base max-w-2xl mx-auto leading-relaxed">
           Hardware recommendations grounded directly in our database. Ask questions, compare products, or analyze specs.
         </p>
       </div>
 
-      <div className="chat-interfacecard card flex flex-col">
+      <div className="chat-interfacecard card flex flex-col relative">
+        {/* History Controls / Header */}
+        <div className="chat-interface-header flex justify-between align-center p-3 border-bottom mb-2 bg-surface rounded-t-lg">
+          <button className="btn btn-secondary btn-sm flex align-center gap-1.5" onClick={handleNewChat}>
+            <Plus size={14} />
+            <span>New Chat</span>
+          </button>
+          
+          <div className="relative">
+            <button 
+              className={`btn btn-sm flex align-center gap-1.5 ${showHistory ? 'btn-primary' : 'btn-secondary'}`} 
+              onClick={() => setShowHistory(!showHistory)}
+            >
+              <Clock size={14} />
+              <span>History</span>
+            </button>
+            
+            {showHistory && (
+              <div className="history-dropdown absolute right-0 mt-2 w-64 bg-surface border rounded-md shadow-lg z-10">
+                <div className="p-2 border-bottom">
+                  <span className="text-xs font-semibold text-secondary">Recent Conversations</span>
+                </div>
+                <div className="max-h-60 overflow-y-auto">
+                  {conversations.length === 0 ? (
+                    <div className="p-3 text-xs text-muted text-center">No recent conversations</div>
+                  ) : (
+                    conversations.map(conv => (
+                      <button 
+                        key={conv._id} 
+                        className={`w-full text-left p-2 text-xs flex align-center gap-2 hover-bg-accent transition-colors ${activeConversationId === conv._id ? 'bg-accent font-semibold' : ''}`}
+                        onClick={() => loadPastChat(conv._id)}
+                      >
+                        <MessageSquare size={12} className="text-muted flex-shrink-0" />
+                        <span className="truncate">{conv.title || 'Untitled Chat'}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Chat Messages Log */}
-        <div ref={containerRef} className="chat-messages-container">
-          {messages.map((msg, idx) => (
+        <div ref={containerRef} className="chat-messages-container relative">
+          {isRestoringConversation ? (
+            <div className="flex flex-col align-center justify-center p-8 text-muted fade-in" style={{height: '200px'}}>
+              <Loader2 className="spinning mb-2" size={24} />
+              <div className="text-sm">Restoring conversation...</div>
+            </div>
+          ) : (
+            Array.isArray(messages) && messages.map((msg, idx) => (
             <div key={idx} className={`message-row flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className="message-wrapper flex flex-col max-w-3xl">
                 
@@ -182,9 +462,13 @@ const AiAssistant = () => {
                 )}
 
                 {/* Message Bubble */}
-                <div className={`message-bubble ${msg.sender === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
-                  {msg.sender === 'ai' && <Sparkles size={14} className="bubble-ai-sparkle" />}
-                  <div className="message-text">{renderMessageText(msg.text)}</div>
+                <div className={`message-bubble flex gap-3 ${msg.sender === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
+                  {msg.sender === 'ai' && (
+                    <div className="flex-shrink-0 mt-1 text-accent-highlight">
+                      <Sparkles size={16} />
+                    </div>
+                  )}
+                  <div className="message-text pt-0.5">{renderMessageText(msg.text)}</div>
 
                   {/* Grounded Sections */}
                   {msg.sections && msg.sections.length > 0 && (
@@ -243,48 +527,77 @@ const AiAssistant = () => {
                   <div className="message-grounded-products mt-3">
                     <div className="grounded-products-grid">
                       {msg.products.map((product, pIdx) => {
+                        const validId = product.canonicalProductId || product.id || product._id;
                         const specsSummary = formatSpecs(product);
-                        const isStockAvailable = product.availability === 'in_stock' || (product.stock !== undefined && product.stock > 0);
+                        
+                        let availText = 'Availability unknown';
+                        let availClass = 'text-muted';
+                        
+                        if (product.availability === 'in_stock') {
+                          availText = 'In Stock';
+                          availClass = 'text-success';
+                        } else if (product.availability === 'out_of_stock') {
+                          availText = 'Out of Stock';
+                          availClass = 'text-danger';
+                        } else if (product.availability === 'pre_order') {
+                          availText = 'Pre-order';
+                          availClass = 'text-warning';
+                        } else if (product.stock !== undefined && product.stock > 0) {
+                          availText = 'In Stock';
+                          availClass = 'text-success';
+                        }
+                        
+                        const prodImage = product.image || (product.images && product.images.length > 0 ? product.images[0] : null);
+
                         return (
                           <div key={pIdx} className="grounded-product-card card p-3 flex flex-col justify-between">
                             <div className="flex gap-3">
-                              {product.images && product.images.length > 0 && (
-                                <img src={product.images[0]} alt={product.name} className="grounded-prod-img" />
+                              {prodImage && (
+                                <img src={prodImage} alt={product.name} className="grounded-prod-img" />
                               )}
                               <div className="grounded-prod-info flex-grow">
                                 <h4 className="grounded-prod-name text-xs font-bold text-primary">{product.name}</h4>
                                 <div className="text-xxs text-muted mt-0.5">{specsSummary || product.brand}</div>
-                                <div className="grounded-prod-price text-xs font-bold mt-1 text-primary">PKR {product.price?.toLocaleString()}</div>
+                                {product.price ? (
+                                  <div className="grounded-prod-price text-xs font-bold mt-1 text-primary">PKR {product.price.toLocaleString()}</div>
+                                ) : (
+                                  <div className="grounded-prod-price text-xs font-bold mt-1 text-muted">Price unavailable</div>
+                                )}
+                                {product.seller && <div className="text-xxs text-muted mt-0.5">from {product.seller} {product.offerCount > 1 ? `(+${product.offerCount - 1} offers)` : ''}</div>}
                               </div>
                             </div>
                             
                             <div className="grounded-card-bottom flex justify-between align-center mt-3 pt-2 border-top">
-                              <span className={`text-xxs font-semibold ${isStockAvailable ? 'text-success' : 'text-danger'}`}>
-                                {isStockAvailable ? (product.stock !== undefined ? `In Stock (${product.stock})` : 'In Stock') : 'Out of Stock'}
+                              <span className={`text-xxs font-semibold ${availClass}`}>
+                                {availText}
                               </span>
-                              <RouterLink to={`/products/${product.slug}`} className="btn btn-primary btn-xxs">
-                                <span>Details</span>
-                                <ArrowRight size={10} />
-                              </RouterLink>
+                              {validId && (
+                                <RouterLink to={`/canonical-products/${validId}`} className="btn btn-primary btn-xxs">
+                                  <span>Details</span>
+                                  <ArrowRight size={10} />
+                                </RouterLink>
+                              )}
                             </div>
 
                             {/* Contextual Quick Actions */}
-                            <div className="contextual-actions flex flex-wrap gap-1.5 mt-2.5">
-                              <button 
-                                className="action-link-btn text-xxs flex align-center gap-1"
-                                onClick={() => handleSend(`Tell me more about the ${product.name}`)}
-                              >
-                                <MessageSquare size={10} />
-                                <span>Ask details</span>
-                              </button>
-                              <button 
-                                className="action-link-btn text-xxs flex align-center gap-1"
-                                onClick={() => handleSend(`Show me cheaper options than ${product.name}`)}
-                              >
-                                <RefreshCw size={10} />
-                                <span>Cheaper alternatives</span>
-                              </button>
-                            </div>
+                            {validId && (
+                              <div className="contextual-actions flex flex-wrap gap-1.5 mt-2.5">
+                                <button 
+                                  className="action-link-btn text-xxs flex align-center gap-1"
+                                  onClick={() => handleSend(`Tell me more about the ${product.name}`, { canonicalProductId: validId, actionIntent: 'ask_details' })}
+                                >
+                                  <MessageSquare size={10} />
+                                  <span>Ask details</span>
+                                </button>
+                                <button 
+                                  className="action-link-btn text-xxs flex align-center gap-1"
+                                  onClick={() => handleSend(`Show me cheaper options than ${product.name}`, { canonicalProductId: validId, actionIntent: 'cheaper_alternatives' })}
+                                >
+                                  <RefreshCw size={10} />
+                                  <span>Cheaper alternatives</span>
+                                </button>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -293,9 +606,9 @@ const AiAssistant = () => {
                 )}
               </div>
             </div>
-          ))}
+          )))}
 
-          {loading && (
+          {loading && !isRestoringConversation && (
             <div className="message-row flex justify-start">
               <div className="message-wrapper max-w-md">
                 <div className="source-indicator flex align-center gap-1 mb-1 text-xxs font-semibold source-general">
@@ -362,6 +675,7 @@ const AiAssistant = () => {
         </div>
       </div>
     </div>
+    </AiErrorBoundary>
   );
 };
 

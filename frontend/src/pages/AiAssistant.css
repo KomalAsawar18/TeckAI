@@ -2,13 +2,17 @@
    AI ASSISTANT PAGE LAYOUT
 ----------------------------------------------- */
 .ai-assistant-page {
-  max-width: 920px;
+  max-width: 1000px;
   margin: 0 auto;
+  min-height: calc(100vh - 180px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .ai-assistant-page .assistant-header {
   text-align: center;
-  margin-bottom: var(--spacing-5);
+  margin-bottom: var(--spacing-8);
 }
 
 .ai-assistant-page .ai-glow-badge {
@@ -28,8 +32,9 @@
 
 /* CHAT INTERFACE CARD */
 .ai-assistant-page .chat-interfacecard {
-  height: calc(100vh - 220px);
-  min-height: 560px;
+  height: 65vh;
+  min-height: 460px;
+  max-height: 640px;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-lg);
@@ -41,7 +46,7 @@
 
 /* CHAT MESSAGE LOG CONTAINER */
 .ai-assistant-page .chat-messages-container {
-  flex: 1 1 0;
+  flex: 1 1 auto;
   overflow-y: auto;
   padding: var(--spacing-6);
   display: flex;
@@ -59,20 +64,20 @@
 .ai-assistant-page .message-row { display: flex; width: 100%; }
 .ai-assistant-page .message-row.justify-start { justify-content: flex-start; }
 .ai-assistant-page .message-row.justify-end { justify-content: flex-end; }
-.ai-assistant-page .message-row.justify-start .message-wrapper { max-width: 82%; }
-.ai-assistant-page .message-row.justify-end .message-wrapper { max-width: 72%; align-items: flex-end; }
+.ai-assistant-page .message-row.justify-start .message-wrapper { max-width: 85%; }
+.ai-assistant-page .message-row.justify-end .message-wrapper { max-width: 75%; align-items: flex-end; }
 .ai-assistant-page .message-wrapper { display: flex; flex-direction: column; }
 
 /* SOURCE INDICATOR */
-.ai-assistant-page .source-indicator { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; font-size: 10px; font-weight: 600; }
+.ai-assistant-page .source-indicator { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; font-size: 10px; font-weight: 600; }
 .ai-assistant-page .source-catalog { color: var(--color-success); }
 .ai-assistant-page .source-general { color: var(--color-text-muted); }
 
 /* MESSAGE BUBBLES */
 .ai-assistant-page .message-bubble {
-  padding: var(--spacing-4);
+  padding: var(--spacing-3) var(--spacing-4);
   font-size: var(--font-size-sm);
-  line-height: 1.65;
+  line-height: 1.5;
   border-radius: var(--radius-lg);
   position: relative;
   word-break: break-word;
@@ -91,15 +96,7 @@
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
   border-bottom-left-radius: var(--radius-xs);
-  padding-left: calc(var(--spacing-5) + 4px);
   align-self: flex-start;
-}
-
-.ai-assistant-page .bubble-ai-sparkle {
-  position: absolute;
-  left: 10px;
-  top: 18px;
-  color: var(--color-accent-highlight);
 }
 
 /* SECTIONS */

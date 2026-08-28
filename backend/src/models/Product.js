@@ -58,7 +58,6 @@ const productSchema = new mongoose.Schema({
   },
   brand: { 
     type: String, 
-    required: true, 
     trim: true,
     index: true 
   },

@@ -15,7 +15,7 @@ const ProductGrid = ({ products = [] }) => {
   return (
     <div className="grid grid-cols-3 gap-6 product-grid-layout">
       {products.map(product => (
-        <ProductGridItemWrapper key={product._id || product.slug}>
+        <ProductGridItemWrapper key={product.id || product._id || product.slug}>
           <ProductCard product={product} />
         </ProductGridItemWrapper>
       ))}

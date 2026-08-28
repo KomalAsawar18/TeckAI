@@ -1,0 +1,151 @@
+.canonical-details-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.back-btn {
+  align-self: flex-start;
+}
+
+.canonical-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-8);
+  align-items: flex-start;
+}
+
+.product-gallery {
+  width: 100%;
+}
+
+.main-image-card {
+  width: 100%;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background-color: var(--color-bg-secondary);
+}
+
+.detail-main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-info-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-brand {
+  letter-spacing: 1px;
+}
+
+.info-title {
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.best-deal-card {
+  background: linear-gradient(145deg, var(--color-bg-surface) 0%, rgba(59, 130, 246, 0.03) 100%);
+  border: 1px solid var(--color-accent-highlight);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px -2px rgba(59, 130, 246, 0.08);
+}
+
+.best-price-label {
+  letter-spacing: 0.5px;
+}
+
+.current-price {
+  color: var(--color-text-primary);
+}
+
+.deal-stock-badge {
+  align-self: center;
+}
+
+.guarantees-grid {
+  border-top: 1px solid var(--color-border);
+}
+
+.available-offers-section {
+  width: 100%;
+}
+
+.offers-table-wrapper {
+  background-color: var(--color-bg-surface);
+  overflow-x: auto;
+}
+
+.offers-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.offers-table th {
+  padding: var(--spacing-3) var(--spacing-4);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.offer-row {
+  border-bottom: 1px solid var(--color-bg-secondary);
+  transition: background-color var(--transition-fast);
+}
+
+.offer-row:hover {
+  background-color: rgba(0, 0, 0, 0.015);
+}
+
+.offer-row:last-child {
+  border-bottom: none;
+}
+
+.offer-seller,
+.offer-variant,
+.offer-condition,
+.offer-availability,
+.offer-price,
+.offer-action {
+  padding: var(--spacing-3) var(--spacing-4);
+  vertical-align: middle;
+}
+
+.specs-table-wrapper {
+  background-color: var(--color-bg-surface);
+}
+
+.specs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.spec-row {
+  border-bottom: 1px solid var(--color-bg-secondary);
+}
+
+.spec-row:last-child {
+  border-bottom: none;
+}
+
+.spec-key {
+  padding: var(--spacing-3) var(--spacing-4);
+  width: 250px;
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.spec-value {
+  padding: var(--spacing-3) var(--spacing-4);
+}
+
+@media (max-width: 768px) {
+  .canonical-detail-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-6);
+  }
+
+  .offers-table {
+    font-size: var(--font-size-xs);
+  }
+}

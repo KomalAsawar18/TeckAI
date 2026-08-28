@@ -5,37 +5,32 @@
  * Does NOT contain database or persistence logic.
  */
 
-// Category mapping lookup
-const CATEGORY_MAP = {
-  'laptops': 'laptops',
-  'laptops-notebooks': 'laptops',
-  'gaming-laptops': 'laptops',
-  
-  'monitors': 'monitors',
-  'led-lcd-monitors': 'monitors',
-  'gaming-monitors': 'monitors',
-  
-  'keyboards': 'keyboards',
-  'gaming-keyboards': 'keyboards',
-  
-  'mouse': 'mouse',
-  'gaming-mouse': 'mouse',
-  
-  'headphones': 'headphones',
-  'headphones-headsets': 'headphones',
-  'gaming-headphones': 'headphones'
-};
-
 /**
- * Normalizes Czone category slug to global TeckAI category.
+ * Normalizes Czone category string to global TeckAI category.
  * 
  * @param {string} rawCategory - Raw category string
- * @returns {string} TeckAI category identifier
+ * @returns {string|undefined} TeckAI category identifier, or undefined if unknown
  */
 function mapCategory(rawCategory) {
-  if (!rawCategory) return 'laptops'; // fallback
-  const cleaned = rawCategory.trim().toLowerCase().replace(/\s+/g, '-');
-  return CATEGORY_MAP[cleaned] || 'laptops';
+  if (!rawCategory) return undefined;
+  const cleaned = rawCategory.trim().toLowerCase();
+  
+  if (cleaned.includes('laptop') || cleaned.includes('notebook')) {
+    return 'laptops';
+  }
+  if (cleaned.includes('monitor') || cleaned.includes('led') || cleaned.includes('lcd')) {
+    return 'monitors';
+  }
+  if (cleaned.includes('keyboard')) {
+    return 'keyboards';
+  }
+  if (cleaned.includes('mouse') || cleaned.includes('mice')) {
+    return 'mouse';
+  }
+  if (cleaned.includes('headphone') || cleaned.includes('headset')) {
+    return 'headphones';
+  }
+  return undefined; // fails safely
 }
 
 /**
@@ -86,9 +81,10 @@ function mapProduct(rawData) {
   const resultProduct = {
     name: rawData.title ? String(rawData.title).trim() : '',
     price: price,
+    currency: 'PKR',
     brand: rawData.brandRaw ? String(rawData.brandRaw).trim() : 'Generic',
     category: mapCategory(rawData.categoryRaw),
-    condition: 'new', // Czone is a retail outlet selling brand new products
+    condition: 'new', // Czone sells brand new products
     description: rawData.title ? `${String(rawData.title).trim()} available at Computer Zone Pakistan.` : '',
     images: rawData.imageUrl ? [String(rawData.imageUrl).trim()] : [],
     specifications: specifications,
@@ -101,16 +97,31 @@ function mapProduct(rawData) {
     },
     seller: {
       name: 'Computer Zone Pakistan',
-      type: 'retailer',
-      location: 'Karachi'
+      type: 'retailer'
     }
   };
 
-  // Only pass stock if genuinely supplied as a number
+  // Only pass stock if genuinely supplied as a valid number
   if (rawData.stock !== undefined && rawData.stock !== null && rawData.stock !== '') {
     const s = Number(rawData.stock);
     if (!isNaN(s)) {
       resultProduct.stock = s;
+    }
+  }
+
+  // Only pass rating if genuinely supplied as a valid number
+  if (rawData.rating !== undefined && rawData.rating !== null && rawData.rating !== '') {
+    const r = Number(rawData.rating);
+    if (!isNaN(r)) {
+      resultProduct.rating = r;
+    }
+  }
+
+  // Only pass reviewCount if genuinely supplied as a valid number
+  if (rawData.reviewCount !== undefined && rawData.reviewCount !== null && rawData.reviewCount !== '') {
+    const rc = Number(rawData.reviewCount);
+    if (!isNaN(rc)) {
+      resultProduct.reviewCount = rc;
     }
   }
 

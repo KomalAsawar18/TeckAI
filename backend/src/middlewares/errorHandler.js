@@ -4,6 +4,11 @@ const AppError = require('../errors/AppError');
 const errorHandler = (err, req, res, next) => {
   let { statusCode, message } = err;
 
+  // Mongoose validation error
+  if (err.name === 'ValidationError') {
+    statusCode = 400;
+  }
+
   // Defaults
   if (!statusCode) {
     statusCode = 500;

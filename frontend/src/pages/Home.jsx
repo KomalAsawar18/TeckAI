@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Cpu, ArrowRight, Laptop, Headphones, Keyboard, Sparkles, Monitor, Mouse } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import ProductCard from '../components/product/ProductCard';
+// Removed ProductCard for compact layout
 import Loader from '../components/common/Loader';
 import ErrorMessage from '../components/common/ErrorMessage';
 import './Home.css';
@@ -35,32 +35,76 @@ const Home = () => {
     }
   }, [showWelcome]);
 
+  const selectCuratedProducts = (productsArray) => {
+    if (!Array.isArray(productsArray) || productsArray.length === 0) return [];
+    
+    // Filter for valid in-stock products with images
+    const valid = productsArray.filter(p => 
+      p.bestOffer && 
+      p.bestOffer.availability === 'in_stock' && 
+      p.images && 
+      p.images.length > 0
+    );
+
+    // Score: prefer multiple offers
+    const scored = valid.map(p => ({
+      product: p,
+      score: p.offerCount > 1 ? 10 : 0
+    }));
+    
+    scored.sort((a, b) => b.score - a.score);
+
+    const selected = [];
+    const seenCategories = new Set();
+    
+    // Pass 1: Try to get diversity across categories
+    for (const item of scored) {
+      if (selected.length >= 2) break;
+      const catId = item.product.category?.slug || item.product.category;
+      if (!seenCategories.has(catId)) {
+        selected.push(item.product);
+        seenCategories.add(catId);
+      }
+    }
+    
+    // Pass 2: Fallback if we don't have 2 yet
+    if (selected.length < 2) {
+      for (const item of scored) {
+        if (selected.length >= 2) break;
+        if (!selected.includes(item.product)) {
+          selected.push(item.product);
+        }
+      }
+    }
+    
+    return selected;
+  };
+
   const fetchFeatured = async () => {
     try {
       setLoading(true);
-      const res = await api.getProducts({ limit: 4 });
-      // Filter in-memory just in case, or show the first 4 returned
-      setFeaturedProducts(res.data.slice(0, 4));
+      // Fetch a larger pool to select from
+      const res = await api.getCanonicalProducts({ limit: 12, sort: 'newest' });
+      const productsArray = Array.isArray(res?.products) ? res.products : [];
+      setFeaturedProducts(selectCuratedProducts(productsArray));
       setError(null);
     } catch (err) {
-      setError(err.message || 'Failed to load featured products');
+      setError(err.message || 'Failed to load recommended products');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const res = await api.getCategories();
-      setCategories(res.data);
-    } catch (err) {
-      console.error('Failed to fetch categories:', err);
-    }
-  };
-
   useEffect(() => {
     fetchFeatured();
-    fetchCategories();
+    // Use hardcoded canonical categories instead of fetching legacy categories
+    setCategories([
+      { name: 'Laptops', slug: 'laptops' },
+      { name: 'Monitors', slug: 'monitors' },
+      { name: 'Keyboards', slug: 'keyboards' },
+      { name: 'Mouse', slug: 'mouse' },
+      { name: 'Headphones', slug: 'headphones' }
+    ]);
   }, []);
 
   const handleSearchSubmit = (e) => {
@@ -174,10 +218,37 @@ const Home = () => {
         ) : error ? (
           <ErrorMessage message={error} onRetry={fetchFeatured} />
         ) : (
-          <div className="home-products-grid">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))}
+          <div className="home-compact-cards">
+            {featuredProducts.map((product) => {
+              const productId = product.id || product._id;
+              return (
+                <Link key={productId} to={`/canonical-products/${productId}`} className="home-compact-card">
+                <div className="compact-card-img">
+                  <img src={product.images[0]} alt={product.name} />
+                </div>
+                <div className="compact-card-info">
+                  {product.brand && product.model && (
+                    <span className="compact-card-brand">{product.brand} {product.model}</span>
+                  )}
+                  <h3 className="compact-card-name">{product.name}</h3>
+                  <div className="compact-card-pricing">
+                    <div className="compact-card-price">
+                      <span className="price-label">Best price from {product.bestOffer.seller}</span>
+                      <span className="price-amount">{product.bestOffer.currency} {product.bestOffer.price.toLocaleString()}</span>
+                    </div>
+                    {product.offerCount > 1 ? (
+                      <div className="compact-card-badge">Multiple offers</div>
+                    ) : (
+                      <div className="compact-card-badge">Best available deal</div>
+                    )}
+                  </div>
+                  <div className="compact-card-action">
+                    View Deal
+                  </div>
+                </div>
+              </Link>
+              );
+            })}
           </div>
         )}
       </section>

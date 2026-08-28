@@ -1,13 +1,71 @@
 const recommendationService = require('../ai/recommendationService');
 const logger = require('../config/logger');
+const AIConversation = require('../models/AIConversation');
 
 class AiController {
+  /**
+   * Get recent conversations for authenticated user
+   */
+  async getConversations(req, res, next) {
+    try {
+      const conversations = await AIConversation.find({ user: req.user._id })
+        .sort({ updatedAt: -1 })
+        .limit(5)
+        .select('_id title updatedAt')
+        .lean();
+      
+      return res.status(200).json({
+        success: true,
+        data: conversations
+      });
+    } catch (error) {
+      logger.error(`AiController getConversations error: ${error.message}`);
+      return next(error);
+    }
+  }
+
+  /**
+   * Get a specific conversation by ID
+   */
+  async getConversationById(req, res, next) {
+    try {
+      const conversation = await AIConversation.findOne({ 
+        _id: req.params.id, 
+        user: req.user._id 
+      }).lean();
+      
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: { message: 'Conversation not found' }
+        });
+      }
+
+      // Rehydrate products in the message history so frontend receives actual product facts
+      for (const msg of conversation.messages) {
+        if (msg.recommendedProductIds && msg.recommendedProductIds.length > 0) {
+          msg.products = await recommendationService.rehydrateRecommendedProducts(msg.recommendedProductIds);
+        } else {
+          msg.products = [];
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: conversation
+      });
+    } catch (error) {
+      logger.error(`AiController getConversationById error: ${error.message}`);
+      return next(error);
+    }
+  }
+
   /**
    * Post chat request to AI Assistant
    */
   async chat(req, res, next) {
     try {
-      const { message, history } = req.body;
+      const { message, conversationId, canonicalProductId, actionIntent } = req.body;
 
       // Validate query presence and type
       if (!message || typeof message !== 'string' || !message.trim()) {
@@ -31,7 +89,10 @@ class AiController {
 
       const result = await recommendationService.getChatResponse({ 
         message: message.trim(), 
-        history 
+        conversationId,
+        canonicalProductId,
+        actionIntent,
+        user: req.user // Available if softProtect found a valid token
       });
 
       return res.status(200).json({
@@ -43,7 +104,8 @@ class AiController {
       return res.status(503).json({
         success: false,
         error: {
-          message: 'The AI Assistant is currently experiencing high demand or is temporarily unavailable. Please try again in a few moments.'
+          message: 'The AI Assistant is currently experiencing high demand or is temporarily unavailable. Please try again in a few moments.',
+          conversationId: error.conversationId || undefined
         }
       });
     }

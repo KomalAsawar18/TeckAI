@@ -230,10 +230,98 @@
   text-decoration: underline;
 }
 
-.home-products-grid {
+.home-compact-cards {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
+}
+.home-compact-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.home-compact-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  border-color: rgba(37, 99, 235, 0.22);
+}
+.compact-card-img {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  margin-right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.compact-card-img img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.compact-card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.compact-card-brand {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.compact-card-name {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.compact-card-pricing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.compact-card-price {
+  display: flex;
+  flex-direction: column;
+}
+.price-label {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+.price-amount {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-accent-highlight);
+}
+.compact-card-badge {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-highlight);
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.compact-card-action {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-accent-highlight);
+  display: inline-block;
 }
 
 /* --- AI CTA Section --- */
@@ -314,8 +402,8 @@
     grid-template-columns: 1fr;
   }
 
-  .home-products-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .home-compact-cards {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -385,8 +473,21 @@
     margin-right: 13px;
   }
 
-  .home-products-grid {
-    grid-template-columns: 1fr;
+  .home-compact-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .compact-card-img {
+    margin-right: 0;
+    margin-bottom: 16px;
+    width: 140px;
+    height: 140px;
+  }
+  
+  .compact-card-pricing {
+    flex-direction: column;
+    gap: 8px;
   }
 
   .home-ai-cta {

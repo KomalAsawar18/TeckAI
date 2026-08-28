@@ -5,6 +5,9 @@ import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/auth/AuthLayout';
 import './auth.css';
 
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
 const Register = () => {
   const { register, user, loading } = useAuth();
   const [name, setName] = useState('');
@@ -30,8 +33,10 @@ const Register = () => {
       setError('Please fill in all fields.');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (!PASSWORD_REGEX.test(password)) {
+      setError(
+        'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'
+      );
       return;
     }
     if (password !== confirmPassword) {
@@ -109,7 +114,7 @@ const Register = () => {
                 type={showPassword ? "text" : "password"}
                 className="auth-input"
                 style={{ paddingRight: '2.5rem' }}
-                placeholder="Minimum 6 characters"
+                placeholder="Minimum 8 chars, uppercase, lowercase, number & symbol"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

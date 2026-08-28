@@ -4,6 +4,7 @@ import MainLayout from './components/layout/MainLayout';
 import Home from './pages/Home';
 import ProductCatalog from './pages/ProductCatalog';
 import ProductDetails from './pages/ProductDetails';
+import CanonicalProductDetails from './pages/CanonicalProductDetails';
 import AiAssistant from './pages/AiAssistant';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -58,6 +59,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <ProductDetails />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/canonical-products/:id" 
+                  element={
+                    <ProtectedRoute>
+                      <CanonicalProductDetails />
                     </ProtectedRoute>
                   } 
                 />
