@@ -5,12 +5,17 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import CanonicalProductDetails from './CanonicalProductDetails';
 import { api } from '../services/api';
 
-vi.mock('../services/api', () => ({
-  api: {
-    getCanonicalProduct: vi.fn(),
-    getCanonicalProductOffers: vi.fn()
-  }
-}));
+vi.mock('../services/api', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      getCanonicalProduct: vi.fn(),
+      getCanonicalProductOffers: vi.fn()
+    }
+  };
+});
 
 const mockCanonicalProduct = {
   id: '6a8ff196815cc0cab334e6ba',
@@ -147,15 +152,19 @@ describe('CanonicalProductDetails Component', () => {
 
     // Check View Deal anchor tags
     const links = screen.getAllByRole('link');
-    const redirectLinks = links.filter(l => l.getAttribute('href')?.startsWith('/api/offers/'));
+    const redirectLinks = links.filter(l => l.getAttribute('href')?.includes('/api/offers/'));
     expect(redirectLinks.length).toBeGreaterThanOrEqual(4);
 
-    // Verify raw affiliate URLs or tokens are never rendered
-    links.forEach(l => {
+    // Verify all deal links route to backend API origin, not frontend relative or origin
+    redirectLinks.forEach(l => {
       const href = l.getAttribute('href') || '';
+      expect(href).toMatch(/^http:\/\/localhost:5000\/api\/offers\/[^\/]+\/redirect$/);
+      expect(href).not.toContain('localhost:5173');
       expect(href).not.toContain('infinitystore.pk/wp-admin');
       expect(href).not.toContain('affiliate_token');
       expect(href).not.toContain('secret_tracking');
+      expect(l.getAttribute('target')).toBe('_blank');
+      expect(l.getAttribute('rel')).toBe('noopener noreferrer');
     });
   });
 });

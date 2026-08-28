@@ -1,6 +1,54 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 /**
+ * Returns the backend API origin (e.g. http://localhost:5000 or https://teckai-backend.vercel.app)
+ * @returns {string}
+ */
+export const getApiOrigin = () => {
+  const envApiUrl = import.meta.env.VITE_API_URL;
+  if (envApiUrl && typeof envApiUrl === 'string') {
+    if (envApiUrl.startsWith('http://') || envApiUrl.startsWith('https://')) {
+      return envApiUrl.replace(/\/api\/?$/, '');
+    }
+  }
+  // In development mode, default to backend server port 5000
+  if (import.meta.env.DEV) {
+    return 'http://localhost:5000';
+  }
+  // In browser runtime on localhost / 127.0.0.1
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:5000';
+  }
+  return '';
+};
+
+/**
+ * Builds the fully-qualified backend offer redirect URL.
+ * Routes directly to the backend /api/offers/:id/redirect endpoint, which returns 302 to the retailer.
+ * @param {Object|string} offerOrPath - ProductOffer object or relative redirect path
+ * @returns {string}
+ */
+export const getOfferRedirectUrl = (offerOrPath) => {
+  if (!offerOrPath) return '#';
+  let path = '';
+  if (typeof offerOrPath === 'string') {
+    path = offerOrPath;
+  } else if (typeof offerOrPath === 'object') {
+    const offerId = offerOrPath.id || offerOrPath._id;
+    path = offerOrPath.redirectUrl || (offerId ? `/api/offers/${offerId}/redirect` : '#');
+  }
+
+  if (!path || path === '#') return '#';
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  const origin = getApiOrigin();
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${origin}${normalizedPath}`;
+};
+
+/**
  * Helper to fetch headers, dynamically appending bearer tokens from local cache
  * @param {string|null} [contentType='application/json']
  * @returns {Object}
@@ -342,5 +390,10 @@ export const api = {
     return request(`/cart/${productId}`, {
       method: 'DELETE'
     });
-  }
+  },
+
+  /**
+   * Helper to build fully qualified backend redirect URL
+   */
+  getOfferRedirectUrl
 };

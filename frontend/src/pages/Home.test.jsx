@@ -8,15 +8,20 @@ import { api } from '../services/api';
 import { AuthProvider } from '../context/AuthContext';
 import { WishlistProvider } from '../context/WishlistContext';
 
-vi.mock('../services/api', () => ({
-  api: {
-    getCanonicalProducts: vi.fn(),
-    getProducts: vi.fn(),
-    getCategories: vi.fn(),
-    getCanonicalProduct: vi.fn(),
-    getCanonicalProductOffers: vi.fn()
-  }
-}));
+vi.mock('../services/api', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      getCanonicalProducts: vi.fn(),
+      getProducts: vi.fn(),
+      getCategories: vi.fn(),
+      getCanonicalProduct: vi.fn(),
+      getCanonicalProductOffers: vi.fn()
+    }
+  };
+});
 
 describe('Home Component', () => {
   beforeEach(() => {

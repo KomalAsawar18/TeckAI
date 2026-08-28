@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, ShieldCheck, CheckCircle2, Tag, Layers } from 'lucide-react';
-import { api } from '../services/api';
+import { api, getOfferRedirectUrl } from '../services/api';
 import { formatPrice } from '../utils/format';
 import Loader from '../components/common/Loader';
 import ErrorMessage from '../components/common/ErrorMessage';
@@ -171,7 +171,7 @@ const CanonicalProductDetails = () => {
               </div>
 
               <a
-                href={bestOffer.redirectUrl || `/api/offers/${bestOffer.id}/redirect`}
+                href={getOfferRedirectUrl(bestOffer)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-primary w-full flex justify-center align-center gap-2 py-3"
@@ -226,7 +226,7 @@ const CanonicalProductDetails = () => {
                 {rankedOffers.map((offer) => {
                   const offerId = offer.id || offer._id;
                   const sellerName = offer.seller?.name || offer.seller || 'Verified Seller';
-                  const redirectUrl = `/api/offers/${offerId}/redirect`;
+                  const redirectUrl = getOfferRedirectUrl(offer);
 
                   return (
                     <tr key={offerId} className="offer-row">
