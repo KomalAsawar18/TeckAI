@@ -9,18 +9,18 @@ const Category = require('../src/models/Category');
 const { compareOffers } = require('../src/commerce/compareOffers');
 const { getProductOffersComparison } = require('../src/commerce/getProductOffersComparison');
 
+const { connectTestDB, disconnectTestDB } = require('./setup/testDb');
+
 describe('Step 3E — Product Offer Comparison & Best Offer Selection Tests', () => {
   beforeAll(async () => {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
+    await connectTestDB();
   });
 
   afterAll(async () => {
     await Category.deleteMany({});
     await CanonicalProduct.deleteMany({});
     await ProductOffer.deleteMany({});
-    await mongoose.connection.close();
+    await disconnectTestDB();
   });
 
   beforeEach(async () => {

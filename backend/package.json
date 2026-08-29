@@ -33,6 +33,9 @@
     "testMatch": [
       "**/tests/**/*.test.js"
     ],
+    "setupFiles": [
+      "<rootDir>/tests/setup/jestSetup.js"
+    ],
     "verbose": true
   },
   "allowScripts": {

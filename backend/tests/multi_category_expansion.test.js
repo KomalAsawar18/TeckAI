@@ -12,13 +12,13 @@ const { runControlledInfinityCanonicalSync } = require('../src/ingestion/sources
 const { runMultiSourceCanonicalSync } = require('../src/catalog/multiSourceCanonicalSync');
 const { getCanonicalCatalog } = require('../src/commerce/getCanonicalCatalog');
 
+const { connectTestDB, disconnectTestDB } = require('./setup/testDb');
+
 describe('Step 3E.3 — Multi-Category Canonical Expansion & Cross-Source Convergence Tests', () => {
   let categories = {};
 
   beforeAll(async () => {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
+    await connectTestDB();
 
     // Ensure 5 supported category documents exist
     const slugs = ['laptops', 'monitors', 'keyboards', 'mouse', 'headphones'];
@@ -36,7 +36,7 @@ describe('Step 3E.3 — Multi-Category Canonical Expansion & Cross-Source Conver
     // Clean up test data
     await CanonicalProduct.deleteMany({ canonicalKey: { $regex: /^test/ } });
     await ProductOffer.deleteMany({ 'source.listingId': { $regex: /^test-expansion-/ } });
-    await mongoose.disconnect();
+    await disconnectTestDB();
   });
 
   beforeEach(async () => {

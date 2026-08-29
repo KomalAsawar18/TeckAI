@@ -5,55 +5,14 @@ const app = require('../src/app');
 const Category = require('../src/models/Category');
 const Product = require('../src/models/Product');
 
-require('dotenv').config();
-let mongoServer;
-
-jest.setTimeout(120000); // Allow download of MongoDB binary in tests
+const { connectTestDB, disconnectTestDB } = require('./setup/testDb');
 
 beforeAll(async () => {
-  // Avoid logging during tests
-  process.env.NODE_ENV = 'test';
-  
-  // Use MONGODB_URI from env if it exists, appending _test database name to isolate test data
-  let uri = process.env.MONGODB_URI;
-  if (uri) {
-    if (uri.includes('?')) {
-      const parts = uri.split('?');
-      // Replace or append database name
-      if (parts[0].endsWith('/')) {
-        parts[0] += 'teckai_test';
-      } else {
-        const lastSlash = parts[0].lastIndexOf('/');
-        parts[0] = parts[0].substring(0, lastSlash + 1) + 'teckai_test';
-      }
-      uri = parts.join('?');
-    } else {
-      if (uri.endsWith('/')) {
-        uri += 'teckai_test';
-      } else {
-        const lastSlash = uri.lastIndexOf('/');
-        if (lastSlash > uri.indexOf('://') + 2) {
-          uri = uri.substring(0, lastSlash + 1) + 'teckai_test';
-        } else {
-          uri += '/teckai_test';
-        }
-      }
-    }
-    console.log('Connecting to integration test database on MongoDB Atlas...');
-    await mongoose.connect(uri);
-  } else {
-    console.log('No MONGODB_URI env variable found. Attempting MongoMemoryServer...');
-    mongoServer = await MongoMemoryServer.create();
-    const memUri = mongoServer.getUri();
-    await mongoose.connect(memUri);
-  }
+  await connectTestDB();
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
-  if (mongoServer) {
-    await mongoServer.stop();
-  }
+  await disconnectTestDB();
 });
 
 let laptopCat, audioCat;

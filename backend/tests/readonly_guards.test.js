@@ -10,15 +10,15 @@ const { compareOffers } = require('../src/commerce/compareOffers');
 const CanonicalProduct = require('../src/models/CanonicalProduct');
 const ProductOffer = require('../src/models/ProductOffer');
 
+const { connectTestDB, disconnectTestDB } = require('./setup/testDb');
+
 describe('Read-Only Validation Guards & Non-Destructive Invariants', () => {
   beforeAll(async () => {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
+    await connectTestDB();
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
+    await disconnectTestDB();
   });
 
   test('getCanonicalCatalog does not mutate, create, or delete CanonicalProduct or ProductOffer records', async () => {

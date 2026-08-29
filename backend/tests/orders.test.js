@@ -7,42 +7,14 @@ const Category = require('../src/models/Category');
 const Cart = require('../src/models/Cart');
 const Order = require('../src/models/Order');
 
-require('dotenv').config();
-
-jest.setTimeout(60000);
+const { connectTestDB, disconnectTestDB } = require('./setup/testDb');
 
 beforeAll(async () => {
-  process.env.NODE_ENV = 'test';
-  
-  let uri = process.env.MONGODB_URI;
-  if (uri) {
-    if (uri.includes('?')) {
-      const parts = uri.split('?');
-      if (parts[0].endsWith('/')) {
-        parts[0] += 'teckai_test';
-      } else {
-        const lastSlash = parts[0].lastIndexOf('/');
-        parts[0] = parts[0].substring(0, lastSlash + 1) + 'teckai_test';
-      }
-      uri = parts.join('?');
-    } else {
-      if (uri.endsWith('/')) {
-        uri += 'teckai_test';
-      } else {
-        const lastSlash = uri.lastIndexOf('/');
-        if (lastSlash > uri.indexOf('://') + 2) {
-          uri = uri.substring(0, lastSlash + 1) + 'teckai_test';
-        } else {
-          uri += '/teckai_test';
-        }
-      }
-    }
-    await mongoose.connect(uri);
-  }
+  await connectTestDB();
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
+  await disconnectTestDB();
 });
 
 describe('Orders & Checkout Integration Tests', () => {

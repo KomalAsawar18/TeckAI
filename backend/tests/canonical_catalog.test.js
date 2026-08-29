@@ -1,11 +1,9 @@
 const request = require('supertest');
-const mongoose = require('mongoose');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const app = require('../src/app');
 const CanonicalProduct = require('../src/models/CanonicalProduct');
 const ProductOffer = require('../src/models/ProductOffer');
 const Category = require('../src/models/Category');
+const { connectTestDB, disconnectTestDB } = require('./setup/testDb');
 
 describe('Step 3E.1 — Canonical Catalog Read API & Frontend Readiness Tests', () => {
   let keyboardCat;
@@ -15,9 +13,7 @@ describe('Step 3E.1 — Canonical Catalog Read API & Frontend Readiness Tests', 
   let outOfStockCanonical;
 
   beforeAll(async () => {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
+    await connectTestDB();
 
     // Ensure categories exist
     keyboardCat = await Category.findOneAndUpdate(
@@ -315,5 +311,9 @@ describe('Step 3E.1 — Canonical Catalog Read API & Frontend Readiness Tests', 
       expect(JSON.stringify(res.body)).not.toContain('SECRET_KEY_123');
       expect(JSON.stringify(res.body)).not.toContain('https://affiliate.example.com');
     });
+  });
+
+  afterAll(async () => {
+    await disconnectTestDB();
   });
 });

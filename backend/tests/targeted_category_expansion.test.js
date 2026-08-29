@@ -15,11 +15,11 @@ const CanonicalProduct = require('../src/models/CanonicalProduct');
 const ProductOffer = require('../src/models/ProductOffer');
 const Category = require('../src/models/Category');
 
+const { connectTestDB, disconnectTestDB } = require('./setup/testDb');
+
 describe('Step 3E.4 — Targeted Laptop & Headphone Canonical Expansion', () => {
   beforeAll(async () => {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
+    await connectTestDB();
     await ensureStandardCategories();
   });
 
@@ -30,7 +30,7 @@ describe('Step 3E.4 — Targeted Laptop & Headphone Canonical Expansion', () => 
     await CanonicalProduct.deleteMany({ canonicalKey: { $in: TEST_KEYS } });
     await ProductOffer.deleteMany({ 'source.listingId': { $regex: /^test-targeted-/ } });
     await ProductOffer.deleteMany({ 'source.listingId': '999111' });
-    await mongoose.disconnect();
+    await disconnectTestDB();
   });
 
   beforeEach(async () => {
