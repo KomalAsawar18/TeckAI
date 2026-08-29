@@ -43,7 +43,7 @@ const Wishlist = () => {
 
       <div className="product-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--spacing-6)' }}>
         {wishlistItems.map((product) => (
-          <ProductCard key={product._id} product={product} />
+          <ProductCard key={product._id || product.id} product={product} />
         ))}
       </div>
     </div>

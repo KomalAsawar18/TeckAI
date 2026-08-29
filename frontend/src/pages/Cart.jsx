@@ -53,16 +53,23 @@ const Cart = () => {
         <div className="cart-items-section flex flex-col gap-6">
           <div className="cart-items-list flex flex-col gap-6">
             {cartItems.map((item) => {
-              const product = item.product;
-              const itemSubtotal = product.price * item.quantity;
+              const product = item.product || {};
+              const itemKey = item.key || product._id || product.id || String(Math.random());
+              const isCanonical = item.itemType === 'canonical' || !!item.canonicalProduct || product.isCanonical;
+              const unitPrice = product.price ?? item.priceSnapshot ?? 0;
+              const itemSubtotal = unitPrice * item.quantity;
               const isMaxStock = product.stock !== undefined ? item.quantity >= product.stock : item.quantity >= 99;
+              const isOutOfStock = product.availability === 'out_of_stock';
+              const detailUrl = isCanonical
+                ? `/canonical-products/${product.canonicalProductId || product._id || product.id}`
+                : `/products/${product.slug || product._id || product.id}`;
 
               return (
-                <div key={product._id} className="card cart-item-card flex gap-6">
+                <div key={itemKey} className="card cart-item-card flex gap-6">
                   <div className="cart-item-image-wrapper">
                     <img
-                      src={product.images?.[0] || 'https://via.placeholder.com/120'}
-                      alt={product.name}
+                      src={product.images?.[0] || product.image || 'https://placehold.co/120x120/eceef2/8b8d99?text=TeckAI'}
+                      alt={product.name || 'Product'}
                       className="cart-item-image"
                     />
                   </div>
@@ -70,21 +77,41 @@ const Cart = () => {
                   <div className="cart-item-details flex flex-col justify-between flex-1">
                     <div className="cart-item-header flex justify-between">
                       <div className="cart-item-info">
-                        <span className="cart-item-brand text-secondary uppercase">
-                          {product.brand}
-                        </span>
+                        <div className="flex align-center gap-2 mb-1">
+                          {product.brand && (
+                            <span className="cart-item-brand text-secondary uppercase text-xs font-bold">
+                              {product.brand}
+                            </span>
+                          )}
+                          {product.seller && (
+                            <span className="badge badge-secondary text-xs">
+                              Seller: {product.seller}
+                            </span>
+                          )}
+                        </div>
+
                         <h3 className="cart-item-name text-primary">
-                          <Link to={`/products/${product.slug}`}>{product.name}</Link>
+                          <Link to={detailUrl}>{product.name}</Link>
                         </h3>
-                        {product.stock !== undefined && product.stock <= 5 && (
-                          <span className="cart-item-stock text-warning">
+
+                        <div className="cart-item-meta flex gap-3 text-xs text-muted mt-1">
+                          {product.condition && <span className="capitalize">Condition: {product.condition}</span>}
+                          {product.variant?.color && <span>Color: {product.variant.color}</span>}
+                        </div>
+
+                        {isOutOfStock ? (
+                          <span className="cart-item-stock text-warning font-semibold mt-1 block">
+                            Currently out of stock with {product.seller || 'retailer'}
+                          </span>
+                        ) : product.stock !== undefined && product.stock <= 5 ? (
+                          <span className="cart-item-stock text-warning text-xs mt-1 block">
                             Only {product.stock} left in stock
                           </span>
-                        )}
+                        ) : null}
                       </div>
                       <button
                         className="cart-item-remove-btn text-muted"
-                        onClick={() => removeFromCart(product._id)}
+                        onClick={() => removeFromCart(itemKey)}
                         aria-label={`Remove ${product.name} from cart`}
                         title="Remove Item"
                       >
@@ -92,23 +119,23 @@ const Cart = () => {
                       </button>
                     </div>
 
-                    <div className="cart-item-actions flex justify-between align-center">
+                    <div className="cart-item-actions flex justify-between align-center mt-3">
                       <div className="cart-quantity-stepper flex align-center border rounded">
                         <button
                           className="qty-btn text-secondary"
-                          onClick={() => updateQuantity(product._id, item.quantity - 1)}
+                          onClick={() => updateQuantity(itemKey, item.quantity - 1)}
                           disabled={item.quantity <= 1}
                           aria-label="Decrease quantity"
                         >
                           <Minus size={16} />
                         </button>
-                        <span className="qty-value text-primary">
+                        <span className="qty-value text-primary font-bold">
                           {item.quantity}
                         </span>
                         <button
                           className="qty-btn text-secondary"
-                          onClick={() => updateQuantity(product._id, item.quantity + 1)}
-                          disabled={isMaxStock}
+                          onClick={() => updateQuantity(itemKey, item.quantity + 1)}
+                          disabled={isMaxStock || isOutOfStock}
                           aria-label="Increase quantity"
                         >
                           <Plus size={16} />
@@ -117,12 +144,12 @@ const Cart = () => {
 
                       <div className="cart-item-price-wrapper text-right">
                         {item.quantity > 1 && (
-                          <div className="cart-item-unit-price text-secondary">
-                            PKR {product.price.toLocaleString()} each
+                          <div className="cart-item-unit-price text-secondary text-xs">
+                            {product.currency || 'PKR'} {unitPrice.toLocaleString()} each
                           </div>
                         )}
-                        <div className="cart-item-subtotal text-primary">
-                          PKR {itemSubtotal.toLocaleString()}
+                        <div className="cart-item-subtotal text-primary font-bold text-lg">
+                          {product.currency || 'PKR'} {itemSubtotal.toLocaleString()}
                         </div>
                       </div>
                     </div>

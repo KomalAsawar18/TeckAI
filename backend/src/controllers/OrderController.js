@@ -2,10 +2,12 @@ const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const CanonicalProduct = require('../models/CanonicalProduct');
+const ProductOffer = require('../models/ProductOffer');
 
 // Create a new order (Checkout)
 exports.createOrder = async (req, res) => {
-  const { shippingAddress } = req.body;
+  const { shippingAddress, acceptPriceChange } = req.body;
 
   // 1. Validate shipping address server-side
   if (!shippingAddress) {
@@ -25,7 +27,12 @@ exports.createOrder = async (req, res) => {
 
   try {
     // 2. Fetch the user's cart from database
-    const cart = await Cart.findOne({ user: req.user.id }).populate('items.product').session(session);
+    const cart = await Cart.findOne({ user: req.user.id })
+      .populate('items.product')
+      .populate('items.canonicalProduct')
+      .populate('items.productOffer')
+      .session(session);
+
     if (!cart || cart.items.length === 0) {
       throw new Error('Your cart is empty.');
     }
@@ -33,58 +40,125 @@ exports.createOrder = async (req, res) => {
     const orderItems = [];
     let subtotal = 0;
 
-    // 3. Process each cart item with atomic conditional stock checks
+    // 3. Process each cart item with atomic conditional stock checks & revalidation
     for (const item of cart.items) {
-      const prod = item.product;
-      if (!prod) {
-        throw new Error('One or more products in your cart no longer exist.');
-      }
+      const isCanonical = item.itemType === 'canonical' || !!item.canonicalProduct;
 
-      // Check active status
-      if (!prod.isActive) {
-        throw new Error(`Product "${prod.name}" is currently unavailable.`);
-      }
+      if (isCanonical) {
+        const canonicalProd = item.canonicalProduct;
+        const offer = item.productOffer;
 
-      // Atomically check stock and decrement if numeric stock is defined, otherwise verify availability status
-      let updatedProduct;
-      if (prod.stock !== undefined) {
-        updatedProduct = await Product.findOneAndUpdate(
-          { _id: prod._id, stock: { $gte: item.quantity }, isActive: true },
-          { $inc: { stock: -item.quantity } },
-          { new: true, session }
-        );
-      } else {
-        const isOutOfStock = prod.availability === 'out_of_stock';
-        const isUnknownUnavailable = prod.availability === 'unknown';
-        if (isOutOfStock || isUnknownUnavailable) {
-          updatedProduct = null;
-        } else {
-          updatedProduct = await Product.findOneAndUpdate(
-            { _id: prod._id, isActive: true, availability: 'in_stock' },
-            { $set: { 'source.lastSyncedAt': new Date() } },
+        if (!canonicalProd || !offer) {
+          throw new Error('One or more canonical products or retailer offers in your cart no longer exist.');
+        }
+
+        if (!canonicalProd.isActive) {
+          throw new Error(`Product "${canonicalProd.name}" is currently inactive in our catalog.`);
+        }
+
+        if (offer.isActive === false) {
+          throw new Error(`The offer for "${canonicalProd.name}" from ${offer.seller?.name || 'retailer'} is no longer active.`);
+        }
+
+        if (offer.availability === 'out_of_stock') {
+          throw new Error(`"${canonicalProd.name}" from ${offer.seller?.name || 'retailer'} is currently out of stock.`);
+        }
+
+        // Live Price Revalidation: Check if price changed materially
+        if (typeof item.priceSnapshot === 'number' && offer.price !== item.priceSnapshot && !acceptPriceChange) {
+          const sellerName = offer.seller?.name || 'the seller';
+          const priceError = new Error(`The price for "${canonicalProd.name}" from ${sellerName} has changed from ${offer.currency || 'PKR'} ${item.priceSnapshot.toLocaleString()} to ${offer.currency || 'PKR'} ${offer.price.toLocaleString()}. Please review before placing order.`);
+          priceError.code = 'PRICE_CHANGED';
+          priceError.oldPrice = item.priceSnapshot;
+          priceError.newPrice = offer.price;
+          priceError.productName = canonicalProd.name;
+          throw priceError;
+        }
+
+        // Atomically check and decrement stock if numeric stock is tracked on offer
+        if (offer.stock !== undefined) {
+          const updatedOffer = await ProductOffer.findOneAndUpdate(
+            { _id: offer._id, stock: { $gte: item.quantity }, isActive: true },
+            { $inc: { stock: -item.quantity } },
             { new: true, session }
           );
+
+          if (!updatedOffer) {
+            throw new Error(`Insufficient stock for "${canonicalProd.name}" from ${offer.seller?.name || 'retailer'}. Available: ${offer.stock}, Requested: ${item.quantity}`);
+          }
         }
+
+        const itemPrice = offer.price;
+        subtotal += itemPrice * item.quantity;
+
+        orderItems.push({
+          itemType: 'canonical',
+          canonicalProduct: canonicalProd._id,
+          productOffer: offer._id,
+          name: canonicalProd.name,
+          price: itemPrice,
+          currency: offer.currency || 'PKR',
+          quantity: item.quantity,
+          image: canonicalProd.images?.[0] || '',
+          seller: offer.seller?.name || 'Retail Supplier',
+          source: offer.source?.name || 'Retailer Feed',
+          condition: offer.condition || 'new',
+          variant: item.variant || offer.variant || null,
+          fulfillmentMode: 'external_supplier'
+        });
+      } else {
+        // Legacy product item validation
+        const prod = item.product;
+        if (!prod) {
+          throw new Error('One or more products in your cart no longer exist.');
+        }
+
+        if (!prod.isActive) {
+          throw new Error(`Product "${prod.name}" is currently unavailable.`);
+        }
+
+        let updatedProduct;
+        if (prod.stock !== undefined) {
+          updatedProduct = await Product.findOneAndUpdate(
+            { _id: prod._id, stock: { $gte: item.quantity }, isActive: true },
+            { $inc: { stock: -item.quantity } },
+            { new: true, session }
+          );
+        } else {
+          const isOutOfStock = prod.availability === 'out_of_stock';
+          const isUnknownUnavailable = prod.availability === 'unknown';
+          if (isOutOfStock || isUnknownUnavailable) {
+            updatedProduct = null;
+          } else {
+            updatedProduct = await Product.findOneAndUpdate(
+              { _id: prod._id, isActive: true, availability: 'in_stock' },
+              { $set: { 'source.lastSyncedAt': new Date() } },
+              { new: true, session }
+            );
+          }
+        }
+
+        if (!updatedProduct) {
+          const stockInfo = prod.stock !== undefined ? `Available: ${prod.stock}` : `Status: ${prod.availability}`;
+          throw new Error(`Insufficient stock or availability for product "${prod.name}". ${stockInfo}, Requested: ${item.quantity}`);
+        }
+
+        const itemPrice = prod.price;
+        subtotal += itemPrice * item.quantity;
+
+        orderItems.push({
+          itemType: 'legacy',
+          product: prod._id,
+          name: prod.name,
+          sku: prod.sku,
+          price: itemPrice,
+          currency: 'PKR',
+          quantity: item.quantity,
+          image: prod.image,
+          slug: prod.slug,
+          fulfillmentMode: 'internal'
+        });
       }
-
-      if (!updatedProduct) {
-        const stockInfo = prod.stock !== undefined ? `Available: ${prod.stock}` : `Status: ${prod.availability}`;
-        throw new Error(`Insufficient stock or availability for product "${prod.name}". ${stockInfo}, Requested: ${item.quantity}`);
-      }
-
-      // Authoritative database price & snapshotted details
-      const itemPrice = prod.price;
-      subtotal += itemPrice * item.quantity;
-
-      orderItems.push({
-        product: prod._id,
-        name: prod.name,
-        sku: prod.sku,
-        price: itemPrice,
-        quantity: item.quantity,
-        image: prod.image,
-        slug: prod.slug
-      });
     }
 
     // 4. Save the snapshotted order to database
@@ -118,6 +192,20 @@ exports.createOrder = async (req, res) => {
     // Rollback atomic stock and creations
     await session.abortTransaction();
     session.endSession();
+    
+    if (err.code === 'PRICE_CHANGED') {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'PRICE_CHANGED',
+          message: err.message,
+          oldPrice: err.oldPrice,
+          newPrice: err.newPrice,
+          productName: err.productName
+        }
+      });
+    }
+
     res.status(400).json({ success: false, error: { message: err.message } });
   }
 };

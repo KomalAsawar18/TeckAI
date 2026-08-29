@@ -1,10 +1,31 @@
 const mongoose = require('mongoose');
 
 const cartItemSchema = new mongoose.Schema({
+  itemType: {
+    type: String,
+    enum: ['legacy', 'canonical'],
+    default: 'legacy'
+  },
+  // Legacy Product reference
   product: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
-    required: [true, 'Product reference is required']
+    ref: 'Product'
+  },
+  // Canonical Product & Offer references
+  canonicalProduct: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CanonicalProduct'
+  },
+  productOffer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ProductOffer'
+  },
+  variant: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
+  priceSnapshot: {
+    type: Number
   },
   quantity: {
     type: Number,
@@ -12,7 +33,7 @@ const cartItemSchema = new mongoose.Schema({
     min: [1, 'Quantity must be at least 1'],
     default: 1
   }
-}, { _id: false }); // Disable individual subdoc IDs for simplicity
+}, { _id: false });
 
 const cartSchema = new mongoose.Schema({
   user: {

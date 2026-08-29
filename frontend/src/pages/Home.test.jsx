@@ -7,6 +7,7 @@ import CanonicalProductDetails from './CanonicalProductDetails';
 import { api } from '../services/api';
 import { AuthProvider } from '../context/AuthContext';
 import { WishlistProvider } from '../context/WishlistContext';
+import { CartProvider } from '../context/CartContext';
 
 vi.mock('../services/api', async (importOriginal) => {
   const actual = await importOriginal();
@@ -192,10 +193,12 @@ describe('Home Component', () => {
       <MemoryRouter initialEntries={['/']}>
         <AuthProvider>
           <WishlistProvider>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/canonical-products/:id" element={<CanonicalProductDetails />} />
-            </Routes>
+            <CartProvider>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/canonical-products/:id" element={<CanonicalProductDetails />} />
+              </Routes>
+            </CartProvider>
           </WishlistProvider>
         </AuthProvider>
       </MemoryRouter>

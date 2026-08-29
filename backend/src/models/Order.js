@@ -1,22 +1,37 @@
 const mongoose = require('mongoose');
 
 const orderItemSchema = new mongoose.Schema({
+  itemType: {
+    type: String,
+    enum: ['legacy', 'canonical'],
+    default: 'legacy'
+  },
   product: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true
+    ref: 'Product'
+  },
+  canonicalProduct: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CanonicalProduct'
+  },
+  productOffer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ProductOffer'
   },
   name: {
     type: String,
     required: true
   },
   sku: {
-    type: String,
-    required: true
+    type: String
   },
   price: {
     type: Number,
     required: true
+  },
+  currency: {
+    type: String,
+    default: 'PKR'
   },
   quantity: {
     type: Number,
@@ -28,6 +43,23 @@ const orderItemSchema = new mongoose.Schema({
   },
   slug: {
     type: String
+  },
+  seller: {
+    type: String
+  },
+  source: {
+    type: String
+  },
+  condition: {
+    type: String
+  },
+  variant: {
+    type: mongoose.Schema.Types.Mixed
+  },
+  fulfillmentMode: {
+    type: String,
+    enum: ['internal', 'external_supplier', 'affiliate_only'],
+    default: 'internal'
   }
 }, { _id: false });
 

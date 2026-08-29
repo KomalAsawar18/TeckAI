@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Wishlist = require('../models/Wishlist');
 const Product = require('../models/Product');
+const CanonicalProduct = require('../models/CanonicalProduct');
+const { getCanonicalProductById } = require('../commerce/getCanonicalCatalog');
 const logger = require('../config/logger');
 
 class WishlistController {
@@ -21,21 +23,46 @@ class WishlistController {
           success: true,
           data: {
             user: userId,
-            products: []
+            products: [],
+            canonicalProducts: []
           }
         });
       }
 
-      // Filter out any items where product might have been deleted, keeping wishlist clean
-      const cleanedProducts = wishlist.products.filter(prod => prod !== null);
-      if (cleanedProducts.length !== wishlist.products.length) {
+      // Clean up deleted legacy products
+      const cleanedProducts = (wishlist.products || []).filter(prod => prod !== null);
+      
+      // Clean up and populate canonical products with bestOffer summaries
+      const canonicalIds = (wishlist.canonicalProducts || []).map(id => id.toString ? id.toString() : id);
+      const populatedCanonical = [];
+      const validCanonicalIds = [];
+
+      for (const cId of canonicalIds) {
+        try {
+          const canonicalData = await getCanonicalProductById(cId, { includeUnavailable: true });
+          if (canonicalData) {
+            populatedCanonical.push(canonicalData);
+            validCanonicalIds.push(cId);
+          }
+        } catch (err) {
+          // Exclude if canonical product no longer exists
+        }
+      }
+
+      if (cleanedProducts.length !== (wishlist.products || []).length || validCanonicalIds.length !== canonicalIds.length) {
         wishlist.products = cleanedProducts;
+        wishlist.canonicalProducts = validCanonicalIds;
         await wishlist.save();
       }
 
       return res.status(200).json({
         success: true,
-        data: wishlist
+        data: {
+          _id: wishlist._id,
+          user: wishlist.user,
+          products: cleanedProducts,
+          canonicalProducts: populatedCanonical
+        }
       });
     } catch (error) {
       logger.error(`GetWishlist controller error: ${error.message}`);
@@ -49,10 +76,11 @@ class WishlistController {
   async addToWishlist(req, res, next) {
     try {
       const userId = req.user._id;
-      const { productId } = req.body;
+      const { productId, canonicalProductId, isCanonical } = req.body;
 
-      // 1. Validate ID formatting
-      if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      const targetId = canonicalProductId || productId;
+
+      if (!targetId || !mongoose.Types.ObjectId.isValid(targetId)) {
         return res.status(400).json({
           success: false,
           error: {
@@ -61,43 +89,59 @@ class WishlistController {
         });
       }
 
-      // 2. Validate product exists in catalog (Source of truth)
-      const product = await Product.findById(productId);
-      if (!product) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            message: 'Product not found in catalog.'
-          }
-        });
+      // Check if it's a CanonicalProduct or legacy Product
+      let isCanonicalTarget = Boolean(isCanonical || canonicalProductId);
+      if (!isCanonicalTarget) {
+        const canonicalExists = await CanonicalProduct.findById(targetId);
+        if (canonicalExists) {
+          isCanonicalTarget = true;
+        }
       }
 
-      // 3. Validate product is active
-      if (!product.isActive) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            message: 'Product is no longer active in our catalog.'
-          }
-        });
+      if (isCanonicalTarget) {
+        const canonicalProd = await CanonicalProduct.findById(targetId);
+        if (!canonicalProd) {
+          return res.status(400).json({
+            success: false,
+            error: { message: 'Product not found in catalog.' }
+          });
+        }
+        if (!canonicalProd.isActive) {
+          return res.status(400).json({
+            success: false,
+            error: { message: 'Product is no longer active in our catalog.' }
+          });
+        }
+
+        await Wishlist.findOneAndUpdate(
+          { user: userId },
+          { $addToSet: { canonicalProducts: targetId } },
+          { new: true, upsert: true }
+        );
+      } else {
+        const product = await Product.findById(targetId);
+        if (!product) {
+          return res.status(400).json({
+            success: false,
+            error: { message: 'Product not found in catalog.' }
+          });
+        }
+        if (!product.isActive) {
+          return res.status(400).json({
+            success: false,
+            error: { message: 'Product is no longer active in our catalog.' }
+          });
+        }
+
+        await Wishlist.findOneAndUpdate(
+          { user: userId },
+          { $addToSet: { products: targetId } },
+          { new: true, upsert: true }
+        );
       }
 
-      // 4. Update wishlist using $addToSet (Duplicate prevention)
-      const wishlist = await Wishlist.findOneAndUpdate(
-        { user: userId },
-        { $addToSet: { products: productId } },
-        { new: true, upsert: true }
-      ).populate({
-        path: 'products',
-        select: 'name slug price images stock brand isActive rating reviewCount'
-      });
-
-      logger.info(`Product ${productId} added to wishlist for user ${req.user.email}`);
-
-      return res.status(200).json({
-        success: true,
-        data: wishlist
-      });
+      // Return refreshed wishlist
+      return this.getWishlist(req, res, next);
     } catch (error) {
       logger.error(`AddToWishlist controller error: ${error.message}`);
       next(error);
@@ -112,7 +156,6 @@ class WishlistController {
       const userId = req.user._id;
       const { productId } = req.params;
 
-      // Validate ID formatting
       if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
         return res.status(400).json({
           success: false,
@@ -122,32 +165,13 @@ class WishlistController {
         });
       }
 
-      // Update wishlist using $pull to delete item
-      const wishlist = await Wishlist.findOneAndUpdate(
+      await Wishlist.findOneAndUpdate(
         { user: userId },
-        { $pull: { products: productId } },
+        { $pull: { products: productId, canonicalProducts: productId } },
         { new: true }
-      ).populate({
-        path: 'products',
-        select: 'name slug price images stock brand isActive rating reviewCount'
-      });
+      );
 
-      if (!wishlist) {
-        return res.status(200).json({
-          success: true,
-          data: {
-            user: userId,
-            products: []
-          }
-        });
-      }
-
-      logger.info(`Product ${productId} removed from wishlist for user ${req.user.email}`);
-
-      return res.status(200).json({
-        success: true,
-        data: wishlist
-      });
+      return this.getWishlist(req, res, next);
     } catch (error) {
       logger.error(`RemoveFromWishlist controller error: ${error.message}`);
       next(error);

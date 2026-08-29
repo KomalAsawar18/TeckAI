@@ -96,6 +96,10 @@ const mockOffersResponse = {
   ]
 };
 
+import { AuthProvider } from '../context/AuthContext';
+import { WishlistProvider } from '../context/WishlistContext';
+import { CartProvider } from '../context/CartContext';
+
 describe('CanonicalProductDetails Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,14 +107,24 @@ describe('CanonicalProductDetails Component', () => {
     api.getCanonicalProductOffers.mockResolvedValue(mockOffersResponse);
   });
 
-  test('loads canonical product by ID and renders product info, specs, and best offer', async () => {
-    render(
+  const renderWithProviders = (ui) => {
+    return render(
       <MemoryRouter initialEntries={['/canonical-products/6a8ff196815cc0cab334e6ba']}>
-        <Routes>
-          <Route path="/canonical-products/:id" element={<CanonicalProductDetails />} />
-        </Routes>
+        <AuthProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <Routes>
+                <Route path="/canonical-products/:id" element={ui} />
+              </Routes>
+            </CartProvider>
+          </WishlistProvider>
+        </AuthProvider>
       </MemoryRouter>
     );
+  };
+
+  test('loads canonical product by ID and renders product info, specs, and best offer', async () => {
+    renderWithProviders(<CanonicalProductDetails />);
 
     await waitFor(() => {
       expect(api.getCanonicalProduct).toHaveBeenCalledWith('6a8ff196815cc0cab334e6ba');
@@ -132,13 +146,7 @@ describe('CanonicalProductDetails Component', () => {
   });
 
   test('renders all available offers separately and points "View Deal" to safe redirect route', async () => {
-    render(
-      <MemoryRouter initialEntries={['/canonical-products/6a8ff196815cc0cab334e6ba']}>
-        <Routes>
-          <Route path="/canonical-products/:id" element={<CanonicalProductDetails />} />
-        </Routes>
-      </MemoryRouter>
-    );
+    renderWithProviders(<CanonicalProductDetails />);
 
     await waitFor(() => {
       expect(screen.getByText('Available Offers (4)')).toBeDefined();

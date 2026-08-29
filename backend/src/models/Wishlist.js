@@ -11,6 +11,10 @@ const wishlistSchema = new mongoose.Schema({
   products: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product'
+  }],
+  canonicalProducts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CanonicalProduct'
   }]
 }, {
   timestamps: true,

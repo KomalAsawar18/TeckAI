@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { api } from '../services/api';
-import { ArrowLeft, Shield, MapPin, Truck, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Shield, MapPin, Truck, AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import Loader from '../components/common/Loader';
 import './Checkout.css';
 
@@ -18,6 +18,7 @@ const Checkout = () => {
   
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [priceChangePrompt, setPriceChangePrompt] = useState(null);
 
   // Redirect if cart is empty
   useEffect(() => {
@@ -26,14 +27,23 @@ const Checkout = () => {
     }
   }, [cartItems, cartLoading, navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const hasOutOfStockItem = cartItems.some(
+    item => item.product?.availability === 'out_of_stock'
+  );
+
+  const placeOrder = async (acceptPriceChange = false) => {
     if (!fullName.trim() || !addressLine.trim() || !city.trim() || !postalCode.trim() || !country.trim()) {
       setError('Please fill in all shipping address fields.');
       return;
     }
 
+    if (hasOutOfStockItem) {
+      setError('One or more items in your cart are currently out of stock. Please remove them before proceeding.');
+      return;
+    }
+
     setError(null);
+    setPriceChangePrompt(null);
     setSubmitting(true);
 
     try {
@@ -45,20 +55,35 @@ const Checkout = () => {
         country: country.trim()
       };
 
-      const res = await api.createOrder(shippingAddress);
+      const res = await api.createOrder({
+        shippingAddress,
+        acceptPriceChange
+      });
+
       if (res.success) {
-        // Clear cart locally immediately to update navbar badges
         clearCartLocally();
-        // Redirect to orders history screen
         navigate('/orders', { state: { justOrdered: true } });
       } else {
-        setError(res.error?.message || 'Failed to place order. Please try again.');
+        if (res.error?.code === 'PRICE_CHANGED') {
+          setPriceChangePrompt(res.error);
+        } else {
+          setError(res.error?.message || 'Failed to place order. Please try again.');
+        }
       }
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please check stock and try again.');
+      if (err.data?.error?.code === 'PRICE_CHANGED' || err.code === 'PRICE_CHANGED') {
+        setPriceChangePrompt(err.data?.error || err);
+      } else {
+        setError(err.message || 'Something went wrong. Please check stock and try again.');
+      }
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await placeOrder(false);
   };
 
   if (cartLoading || cartItems.length === 0) {
@@ -80,9 +105,48 @@ const Checkout = () => {
         <p className="text-secondary text-sm">Please provide shipping details and complete checkout</p>
       </div>
 
+      {/* Price Change Confirmation Banner */}
+      {priceChangePrompt && (
+        <div className="price-change-modal card p-5 mb-6 border border-warning bg-surface shadow-md">
+          <div className="flex align-start gap-3">
+            <AlertTriangle size={24} className="text-warning shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-md font-bold text-primary">Live Retailer Price Update</h3>
+              <p className="text-sm text-secondary mt-1">
+                {priceChangePrompt.message}
+              </p>
+              <div className="price-diff-box mt-3 p-3 bg-secondary rounded flex gap-6 text-sm">
+                <div>
+                  <span className="text-muted text-xs block">Previous Cart Price:</span>
+                  <span className="font-semibold line-through text-secondary">PKR {priceChangePrompt.oldPrice?.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-muted text-xs block">Current Verified Price:</span>
+                  <span className="font-bold text-primary text-md">PKR {priceChangePrompt.newPrice?.toLocaleString()}</span>
+                </div>
+              </div>
+              <div className="flex gap-3 mt-4">
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm flex align-center gap-2"
+                  onClick={() => placeOrder(true)}
+                  disabled={submitting}
+                >
+                  <CheckCircle2 size={16} />
+                  <span>Accept New Price & Place Order</span>
+                </button>
+                <Link to="/cart" className="btn btn-secondary btn-sm">
+                  Review Cart
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="checkout-error-banner card p-4 mb-6 flex align-center gap-3">
-          <AlertCircle size={20} className="text-error" />
+          <AlertCircle size={20} className="text-error shrink-0" />
           <span className="text-sm font-semibold">{error}</span>
         </div>
       )}
@@ -137,7 +201,7 @@ const Checkout = () => {
                   id="city"
                   type="text"
                   className="input-text"
-                  placeholder="Silicon Valley"
+                  placeholder="Karachi / Lahore / Islamabad"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   required
@@ -153,7 +217,7 @@ const Checkout = () => {
                   id="postalCode"
                   type="text"
                   className="input-text"
-                  placeholder="94043"
+                  placeholder="75500"
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
                   required
@@ -186,7 +250,7 @@ const Checkout = () => {
             <div className="payment-options-box card p-4 flex align-center justify-between">
               <div className="payment-details">
                 <span className="font-semibold text-primary block text-sm">Cash on Delivery (COD)</span>
-                <span className="text-xs text-muted">Pay with cash when items are delivered to your doorstep.</span>
+                <span className="text-xs text-muted">Pay in cash when items are delivered to your doorstep.</span>
               </div>
               <input
                 type="radio"
@@ -200,10 +264,15 @@ const Checkout = () => {
             <button
               type="submit"
               className="btn btn-primary py-3 w-full mt-2"
-              disabled={submitting}
+              disabled={submitting || hasOutOfStockItem}
             >
               {submitting ? 'Processing order...' : 'Place Order'}
             </button>
+
+            {/* Supplier Transparency Notice */}
+            <div className="fulfillment-disclosure p-3 bg-secondary rounded text-xs text-muted mt-2">
+              <strong>Order Fulfillment Notice:</strong> Retailer products are supplied by verified external vendors. TeckAI coordinates delivery on your behalf.
+            </div>
           </form>
         </div>
 
@@ -216,24 +285,35 @@ const Checkout = () => {
 
             <div className="checkout-items-list flex flex-col gap-4 max-h-96 overflow-y-auto mb-6 pr-2">
               {cartItems.map((item) => {
-                const product = item.product;
+                const product = item.product || {};
+                const itemKey = item.key || product._id || product.id || String(Math.random());
+                const unitPrice = product.price ?? item.priceSnapshot ?? 0;
+                const itemTotal = unitPrice * item.quantity;
+                const image = product.images?.[0] || product.image;
+
                 return (
-                  <div key={product._id} className="checkout-item-preview flex align-center justify-between gap-3">
+                  <div key={itemKey} className="checkout-item-preview flex align-center justify-between gap-3">
                     <div className="item-detail flex align-center gap-3">
-                      {product.image && (
+                      {image && (
                         <img 
-                          src={product.image} 
+                          src={image} 
                           alt={product.name} 
                           className="item-preview-img" 
                         />
                       )}
                       <div className="item-name-qty">
                         <span className="font-semibold text-primary block text-xs checkout-item-name">{product.name}</span>
+                        {product.seller && (
+                          <span className="text-xs text-secondary block">Seller: {product.seller}</span>
+                        )}
+                        {product.variant?.color && (
+                          <span className="text-xs text-muted block">Color: {product.variant.color}</span>
+                        )}
                         <span className="text-muted text-xs block mt-1">Qty: {item.quantity}</span>
                       </div>
                     </div>
                     <span className="font-bold text-primary text-xs">
-                      PKR {(product.price * item.quantity).toLocaleString()}
+                      {product.currency || 'PKR'} {itemTotal.toLocaleString()}
                     </span>
                   </div>
                 );
@@ -267,3 +347,4 @@ const Checkout = () => {
 };
 
 export default Checkout;
+

@@ -249,12 +249,13 @@ export const api = {
   },
 
   /**
-   * Add a product reference to user's wishlist
+   * Add a product reference to user's wishlist (supports legacy and canonical products)
    */
-  addToWishlist(productId) {
+  addToWishlist(data) {
+    const body = typeof data === 'object' && data !== null ? data : { productId: data };
     return request('/wishlist', {
       method: 'POST',
-      body: { productId }
+      body
     });
   },
 
@@ -270,10 +271,11 @@ export const api = {
   /**
    * Place an order (Checkout)
    */
-  createOrder(shippingAddress) {
+  createOrder(orderData) {
+    const body = orderData && orderData.shippingAddress ? orderData : { shippingAddress: orderData };
     return request('/orders', {
       method: 'POST',
-      body: { shippingAddress }
+      body
     });
   },
 

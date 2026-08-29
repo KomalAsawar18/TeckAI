@@ -4,6 +4,87 @@ import { useAuth } from './AuthContext';
 
 const CartContext = createContext(null);
 
+/**
+ * Generate a deterministic unique key for each cart line item.
+ * Guarantees that different sellers or different variants for the same canonical product remain separate.
+ */
+export const getCartItemKey = (item) => {
+  if (!item) return '';
+  const isCanonical = item.itemType === 'canonical' || !!item.canonicalProduct;
+  if (isCanonical) {
+    const cId = (item.canonicalProduct?._id || item.canonicalProduct?.id || item.canonicalProduct || item.canonicalProductId)?.toString() || '';
+    const oId = (item.productOffer?._id || item.productOffer?.id || item.productOffer || item.selectedProductOfferId || item.productOfferId)?.toString() || '';
+    const variantStr = item.variant ? JSON.stringify(item.variant) : '';
+    return `canonical_${cId}_${oId}_${variantStr}`;
+  }
+  const pId = (item.product?._id || item.product?.id || item.product)?.toString() || '';
+  return `legacy_${pId}`;
+};
+
+/**
+ * Normalizes populated DB/guest cart item into unified frontend representation.
+ */
+export const normalizeCartItem = (item) => {
+  if (!item) return null;
+  const isCanonical = item.itemType === 'canonical' || !!item.canonicalProduct;
+
+  if (isCanonical) {
+    const canonical = typeof item.canonicalProduct === 'object' ? item.canonicalProduct : { _id: item.canonicalProduct };
+    const offer = typeof item.productOffer === 'object' ? item.productOffer : { _id: item.productOffer };
+    const price = offer.price ?? item.priceSnapshot ?? 0;
+    const currency = offer.currency || 'PKR';
+    const seller = offer.seller?.name || offer.seller || 'Retail Supplier';
+    const source = offer.source?.name || offer.source || 'Retailer Feed';
+    const image = canonical.images?.[0] || (Array.isArray(canonical.images) && canonical.images[0]) || '';
+    const variant = item.variant || offer.variant || null;
+    const stock = offer.stock;
+    const availability = offer.availability || 'in_stock';
+    const isAvailable = availability !== 'out_of_stock';
+
+    return {
+      itemType: 'canonical',
+      key: getCartItemKey(item),
+      canonicalProduct: canonical,
+      productOffer: offer,
+      variant,
+      priceSnapshot: price,
+      quantity: item.quantity,
+      // Unified product interface for Cart / Checkout views
+      product: {
+        _id: canonical._id || canonical.id,
+        id: canonical._id || canonical.id,
+        name: canonical.name || 'Product',
+        brand: canonical.brand || '',
+        model: canonical.model || '',
+        price,
+        currency,
+        seller,
+        source,
+        condition: offer.condition || 'new',
+        images: canonical.images || (image ? [image] : []),
+        image,
+        stock,
+        availability,
+        isAvailable,
+        variant,
+        isCanonical: true,
+        canonicalProductId: canonical._id || canonical.id,
+        productOfferId: offer._id || offer.id
+      }
+    };
+  }
+
+  // Legacy item
+  const product = typeof item.product === 'object' ? item.product : { _id: item.product, price: item.priceSnapshot || 0 };
+  return {
+    itemType: 'legacy',
+    key: getCartItemKey(item),
+    product,
+    priceSnapshot: product.price ?? item.priceSnapshot,
+    quantity: item.quantity
+  };
+};
+
 export const CartProvider = ({ children }) => {
   const { user, loading: authLoading } = useAuth();
   const [cartItems, setCartItems] = useState([]);
@@ -17,9 +98,18 @@ export const CartProvider = ({ children }) => {
     const initializeCart = async () => {
       setLoading(true);
       try {
-        // Fetch all products to resolve guest info or validate stock levels (Source of Truth)
-        const prodRes = await api.getProducts({ limit: 100 });
-        const catalogProducts = prodRes.success ? prodRes.data : [];
+        // Fetch legacy catalog products as fallback helper
+        let catalogProducts = [];
+        try {
+          if (typeof api.getProducts === 'function') {
+            const prodRes = await api.getProducts({ limit: 100 });
+            if (prodRes && prodRes.success && Array.isArray(prodRes.data)) {
+              catalogProducts = prodRes.data;
+            }
+          }
+        } catch (e) {
+          // ignore in tests / offline
+        }
 
         // Check local storage for guest items
         const localCartRaw = localStorage.getItem('cart');
@@ -28,7 +118,7 @@ export const CartProvider = ({ children }) => {
         if (user) {
           // Fetch authenticated user's remote database cart
           const cartRes = await api.getCart();
-          const dbCartItems = cartRes.success && cartRes.data ? cartRes.data.items : [];
+          const dbCartItems = cartRes.success && cartRes.data?.items ? cartRes.data.items : [];
 
           // Handle guest -> login merge behavior
           if (guestItems.length > 0) {
@@ -37,73 +127,60 @@ export const CartProvider = ({ children }) => {
 
             // 1. Add remote DB items
             dbCartItems.forEach(item => {
-              const prodId = item.product._id || item.product;
-              mergedMap.set(prodId.toString(), {
-                product: prodId.toString(),
-                quantity: item.quantity
-              });
+              const key = getCartItemKey(item);
+              mergedMap.set(key, { ...item });
             });
 
-            // 2. Combine guest items
+            // 2. Combine guest items by unique line key
             guestItems.forEach(item => {
-              const prodId = item.product;
-              const existing = mergedMap.get(prodId.toString());
+              const key = getCartItemKey(item);
+              const existing = mergedMap.get(key);
               if (existing) {
-                mergedMap.set(prodId.toString(), {
-                  product: prodId.toString(),
+                mergedMap.set(key, {
+                  ...existing,
                   quantity: existing.quantity + item.quantity
                 });
               } else {
-                mergedMap.set(prodId.toString(), {
-                  product: prodId.toString(),
-                  quantity: item.quantity
-                });
+                mergedMap.set(key, { ...item });
               }
             });
 
-            // 3. Validate and cap quantities against database stock truths
-            const validatedItems = [];
-            for (const [prodId, item] of mergedMap.entries()) {
-              const catalogProd = catalogProducts.find(p => p._id.toString() === prodId);
-              if (catalogProd && catalogProd.isActive && catalogProd.stock > 0) {
-                const cappedQty = Math.min(item.quantity, catalogProd.stock);
-                validatedItems.push({
-                  product: prodId,
-                  quantity: cappedQty
-                });
+            // 3. Format validated payload for sync
+            const syncPayload = Array.from(mergedMap.values()).map(item => {
+              if (item.itemType === 'canonical' || item.canonicalProduct) {
+                return {
+                  itemType: 'canonical',
+                  canonicalProduct: (item.canonicalProduct?._id || item.canonicalProduct?.id || item.canonicalProduct).toString(),
+                  productOffer: (item.productOffer?._id || item.productOffer?.id || item.productOffer).toString(),
+                  variant: item.variant || null,
+                  priceSnapshot: item.priceSnapshot || item.productOffer?.price,
+                  quantity: item.quantity
+                };
               }
-            }
+              return {
+                itemType: 'legacy',
+                product: (item.product?._id || item.product?.id || item.product).toString(),
+                priceSnapshot: item.priceSnapshot || item.product?.price,
+                quantity: item.quantity
+              };
+            });
 
-            // 4. Sync merged cart back to the database (PUT replacements)
-            const syncRes = await api.updateCart(validatedItems);
-            if (syncRes.success) {
-              // Clear guest cart ONLY after successful server synchronization
+            // 4. Sync merged cart back to the database
+            const syncRes = await api.updateCart(syncPayload);
+            if (syncRes.success && syncRes.data?.items) {
               localStorage.removeItem('cart');
-              
-              // Set state with populated product detail cart returned from server
-              setCartItems(syncRes.data.items);
+              setCartItems(syncRes.data.items.map(normalizeCartItem).filter(Boolean));
             } else {
-              // Fallback to DB items if sync rejected by server
-              setCartItems(dbCartItems);
+              setCartItems(dbCartItems.map(normalizeCartItem).filter(Boolean));
             }
           } else {
             // No guest items; directly apply remote DB items
-            setCartItems(dbCartItems);
+            setCartItems(dbCartItems.map(normalizeCartItem).filter(Boolean));
           }
         } else {
           // Anonymous Guest cart state resolution
-          const validatedGuestItems = [];
-          guestItems.forEach(item => {
-            const catalogProd = catalogProducts.find(p => p._id.toString() === item.product);
-            if (catalogProd && catalogProd.isActive && catalogProd.stock > 0) {
-              const cappedQty = Math.min(item.quantity, catalogProd.stock);
-              validatedGuestItems.push({
-                product: catalogProd, // Store full catalog metadata in state for views
-                quantity: cappedQty
-              });
-            }
-          });
-          setCartItems(validatedGuestItems);
+          const normalizedGuest = guestItems.map(normalizeCartItem).filter(Boolean);
+          setCartItems(normalizedGuest);
         }
       } catch (error) {
         console.error('Initialize cart failed:', error.message);
@@ -118,17 +195,32 @@ export const CartProvider = ({ children }) => {
 
   // Sync state changes with localStorage (for guest) or DB (for authenticated user)
   const syncCartState = async (updatedItems) => {
+    const normalized = updatedItems.map(normalizeCartItem).filter(Boolean);
+
     if (user) {
       try {
-        // Format payload to only contain product IDs and quantities
-        const payload = updatedItems.map(item => ({
-          product: (item.product._id || item.product).toString(),
-          quantity: item.quantity
-        }));
-        
+        const payload = normalized.map(item => {
+          if (item.itemType === 'canonical') {
+            return {
+              itemType: 'canonical',
+              canonicalProduct: (item.canonicalProduct?._id || item.canonicalProduct?.id || item.canonicalProduct).toString(),
+              productOffer: (item.productOffer?._id || item.productOffer?.id || item.productOffer).toString(),
+              variant: item.variant || null,
+              priceSnapshot: item.priceSnapshot,
+              quantity: item.quantity
+            };
+          }
+          return {
+            itemType: 'legacy',
+            product: (item.product?._id || item.product?.id || item.product).toString(),
+            priceSnapshot: item.priceSnapshot,
+            quantity: item.quantity
+          };
+        });
+
         const res = await api.updateCart(payload);
-        if (res.success) {
-          setCartItems(res.data.items);
+        if (res.success && res.data?.items) {
+          setCartItems(res.data.items.map(normalizeCartItem).filter(Boolean));
           return { success: true };
         }
         return { success: false, message: 'Cart update failed' };
@@ -137,38 +229,67 @@ export const CartProvider = ({ children }) => {
         return { success: false, message: error.message };
       }
     } else {
-      // Guest state persistence (stores only product ID + quantity)
-      const guestPayload = updatedItems.map(item => ({
-        product: (item.product._id || item.product).toString(),
-        quantity: item.quantity
-      }));
-      localStorage.setItem('cart', JSON.stringify(guestPayload));
-      setCartItems(updatedItems);
+      // Guest state persistence
+      localStorage.setItem('cart', JSON.stringify(normalized));
+      setCartItems(normalized);
       return { success: true };
     }
   };
 
-  const addToCart = async (product, quantity = 1) => {
-    const existingIndex = cartItems.findIndex(
-      item => (item.product._id || item.product).toString() === product._id.toString()
-    );
+  /**
+   * Add a product (canonical or legacy) to cart.
+   * For canonical products: binds explicitly to selectedOffer (or bestOffer fallback).
+   */
+  const addToCart = async (product, quantity = 1, selectedOffer = null, variant = null) => {
+    const isCanonical = product.isCanonical || !!product.bestOffer || !!selectedOffer || !!product.canonicalProductId;
+
+    let newItem;
+    if (isCanonical) {
+      const offer = selectedOffer || product.bestOffer;
+      if (!offer) {
+        return { success: false, message: 'No purchasable offer available for this product.' };
+      }
+
+      newItem = {
+        itemType: 'canonical',
+        canonicalProduct: product,
+        productOffer: offer,
+        variant: variant || offer.variant || null,
+        priceSnapshot: offer.price,
+        quantity
+      };
+    } else {
+      newItem = {
+        itemType: 'legacy',
+        product,
+        priceSnapshot: product.price,
+        quantity
+      };
+    }
+
+    const newKey = getCartItemKey(newItem);
+    const existingIndex = cartItems.findIndex(item => getCartItemKey(item) === newKey);
 
     let updated = [...cartItems];
     let newQty = quantity;
 
     if (existingIndex > -1) {
       newQty = cartItems[existingIndex].quantity + quantity;
-      // Cap at database stock level
-      newQty = Math.min(newQty, product.stock);
+      const maxStock = isCanonical ? (selectedOffer?.stock ?? product.bestOffer?.stock) : product.stock;
+      if (maxStock !== undefined) {
+        newQty = Math.min(newQty, maxStock);
+      }
       updated[existingIndex] = {
         ...updated[existingIndex],
         quantity: newQty
       };
     } else {
-      // New item additions
-      newQty = Math.min(newQty, product.stock);
+      const maxStock = isCanonical ? (selectedOffer?.stock ?? product.bestOffer?.stock) : product.stock;
+      if (maxStock !== undefined) {
+        newQty = Math.min(newQty, maxStock);
+      }
       updated.push({
-        product,
+        ...newItem,
         quantity: newQty
       });
     }
@@ -178,16 +299,21 @@ export const CartProvider = ({ children }) => {
     return await syncCartState(updated);
   };
 
-  const updateQuantity = async (productId, quantity) => {
-    const existingIndex = cartItems.findIndex(
-      item => (item.product._id || item.product).toString() === productId.toString()
-    );
+  const updateQuantity = async (itemKeyOrId, quantity) => {
+    const existingIndex = cartItems.findIndex(item => {
+      const key = getCartItemKey(item);
+      const prodId = (item.product?._id || item.product?.id || item.product)?.toString();
+      return key === itemKeyOrId || prodId === itemKeyOrId?.toString();
+    });
 
     if (existingIndex === -1) return { success: false, message: 'Item not in cart' };
 
     const item = cartItems[existingIndex];
-    const maxStock = item.product.stock;
-    const cappedQty = Math.min(Math.max(1, quantity), maxStock);
+    const maxStock = item.product?.stock;
+    let cappedQty = Math.max(1, quantity);
+    if (maxStock !== undefined) {
+      cappedQty = Math.min(cappedQty, maxStock);
+    }
 
     const updated = [...cartItems];
     updated[existingIndex] = {
@@ -198,10 +324,12 @@ export const CartProvider = ({ children }) => {
     return await syncCartState(updated);
   };
 
-  const removeFromCart = async (productId) => {
-    const updated = cartItems.filter(
-      item => (item.product._id || item.product).toString() !== productId.toString()
-    );
+  const removeFromCart = async (itemKeyOrId) => {
+    const updated = cartItems.filter(item => {
+      const key = getCartItemKey(item);
+      const prodId = (item.product?._id || item.product?.id || item.product)?.toString();
+      return key !== itemKeyOrId && prodId !== itemKeyOrId?.toString();
+    });
     return await syncCartState(updated);
   };
 
@@ -215,10 +343,13 @@ export const CartProvider = ({ children }) => {
   };
 
   // Get total count of items in the cart
-  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const cartCount = cartItems.reduce((acc, item) => acc + (item.quantity || 0), 0);
 
-  // Subtotal calculation (Source of truth: database product prices)
-  const cartSubtotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+  // Subtotal calculation (Source of truth: database/offer prices)
+  const cartSubtotal = cartItems.reduce((acc, item) => {
+    const unitPrice = item.product?.price ?? item.priceSnapshot ?? 0;
+    return acc + (unitPrice * (item.quantity || 0));
+  }, 0);
 
   return (
     <CartContext.Provider
@@ -246,3 +377,4 @@ export const useCart = () => {
   }
   return context;
 };
+

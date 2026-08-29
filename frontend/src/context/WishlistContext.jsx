@@ -13,6 +13,13 @@ export const WishlistProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const parseWishlistData = (data) => {
+    if (!data) return [];
+    const legacy = Array.isArray(data.products) ? data.products : [];
+    const canonical = Array.isArray(data.canonicalProducts) ? data.canonicalProducts : [];
+    return [...legacy, ...canonical];
+  };
+
   // Load wishlist on user changes
   useEffect(() => {
     if (authLoading) return;
@@ -23,7 +30,7 @@ export const WishlistProvider = ({ children }) => {
         try {
           const res = await api.getWishlist();
           if (res.success && res.data) {
-            setWishlistItems(res.data.products);
+            setWishlistItems(parseWishlistData(res.data));
           }
         } catch (error) {
           console.error('Failed to load wishlist:', error.message);
@@ -40,9 +47,12 @@ export const WishlistProvider = ({ children }) => {
   }, [user, authLoading]);
 
   const isInWishlist = (productId) => {
-    return wishlistItems.some(
-      item => (item._id || item).toString() === productId.toString()
-    );
+    if (!productId) return false;
+    const target = productId.toString();
+    return wishlistItems.some(item => {
+      const id = (item._id || item.id || item.canonicalProductId || item)?.toString();
+      return id === target;
+    });
   };
 
   const addToWishlist = async (product) => {
@@ -53,9 +63,16 @@ export const WishlistProvider = ({ children }) => {
     }
 
     try {
-      const res = await api.addToWishlist(product._id);
+      const prodId = typeof product === 'object' ? (product._id || product.id || product.canonicalProductId) : product;
+      const isCanonical = typeof product === 'object' ? (product.isCanonical || !!product.bestOffer || !!product.canonicalProductId) : false;
+
+      const payload = isCanonical
+        ? { canonicalProductId: prodId, isCanonical: true }
+        : { productId: prodId };
+
+      const res = await api.addToWishlist(payload);
       if (res.success && res.data) {
-        setWishlistItems(res.data.products);
+        setWishlistItems(parseWishlistData(res.data));
         return { success: true };
       }
       return { success: false, message: 'Failed to add item to wishlist' };
@@ -72,9 +89,10 @@ export const WishlistProvider = ({ children }) => {
     }
 
     try {
-      const res = await api.removeFromWishlist(productId);
+      const prodId = typeof productId === 'object' ? (productId._id || productId.id || productId.canonicalProductId) : productId;
+      const res = await api.removeFromWishlist(prodId);
       if (res.success && res.data) {
-        setWishlistItems(res.data.products);
+        setWishlistItems(parseWishlistData(res.data));
         return { success: true };
       }
       return { success: false, message: 'Failed to remove item from wishlist' };
@@ -86,7 +104,7 @@ export const WishlistProvider = ({ children }) => {
 
   // Toggle helper
   const toggleWishlist = async (product) => {
-    const productId = product._id;
+    const productId = typeof product === 'object' ? (product._id || product.id || product.canonicalProductId) : product;
     if (isInWishlist(productId)) {
       return await removeFromWishlist(productId);
     } else {
@@ -120,3 +138,4 @@ export const useWishlist = () => {
   }
   return context;
 };
+
